@@ -1,17 +1,18 @@
 import React from 'react';
-import Header from '../components/Header';
 
-const Home = () => {
-    return (
-        <div className="home">
-            <Header />
-            <main className="home__content">
-                <h2>Bienvenidos a la Plataforma de Emprendimientos Locales</h2>
-                <p>Aquí podrás conocer los productos y servicios de emprendedores locales.</p>
-                {/* Aquí puedes agregar más contenido, como una lista de productos */}
-            </main>
+function Home() {
+  return (
+    <main className="home">
+      <section className="home__hero">
+        <div className="container">
+          <h1 className="home__title">Bienvenido a la Plataforma de Emprendimientos Locales</h1>
+          <p className="home__subtitle">
+            Descubre productos y servicios de tu comunidad, apoya a emprendedores y encuentra lo que necesitas cerca de ti.
+          </p>
         </div>
-    );
+      </section>
+    </main>
+  );
 }
 
 export default Home;
