@@ -31,7 +31,9 @@ a {
 }
 
 /* Estilos específicos para Home */
-
+.home {
+  text-align: center;
+}
 .home__hero {
   background-color: #ffffff;
   padding: 4rem 2rem;

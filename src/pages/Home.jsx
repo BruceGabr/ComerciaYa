@@ -1,17 +1,12 @@
+// src/pages/Home.jsx
 import React from 'react';
 
 function Home() {
   return (
-    <main className="home">
-      <section className="home__hero">
-        <div className="container">
-          <h1 className="home__title">Bienvenido a la Plataforma de Emprendimientos Locales</h1>
-          <p className="home__subtitle">
-            Descubre productos y servicios de tu comunidad, apoya a emprendedores y encuentra lo que necesitas cerca de ti.
-          </p>
-        </div>
-      </section>
-    </main>
+    <div className="page">
+      <h2>Inicio</h2>
+      <p>Bienvenido a EmprendeLocal. Descubre productos y servicios de emprendedores locales.</p>
+    </div>
   );
 }
 
