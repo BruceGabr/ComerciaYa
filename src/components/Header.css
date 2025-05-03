@@ -94,10 +94,11 @@
   }
 
   .header__hamburger {
-    display: none;
+    display: none;  
   }
 
   .header__nav {
+    max-height: none;
     overflow: visible;
     position: static;
     padding: 0;
@@ -114,3 +115,42 @@
     display: inline-block;
   }
 }
+/* Animación de hamburguesa a X */
+.header__hamburger {
+    position: relative;
+    width: 30px;
+    height: 24px;
+  }
+  
+  .header__hamburger-line {
+    position: absolute;
+    left: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .header__hamburger-line:nth-child(1) {
+    top: 0;
+  }
+  
+  .header__hamburger-line:nth-child(2) {
+    top: 10px;
+  }
+  
+  .header__hamburger-line:nth-child(3) {
+    top: 20px;
+  }
+  
+  .header__hamburger--open .header__hamburger-line:nth-child(1) {
+    transform: rotate(45deg);
+    top: 10px;
+  }
+  
+  .header__hamburger--open .header__hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .header__hamburger--open .header__hamburger-line:nth-child(3) {
+    transform: rotate(-45deg);
+    top: 10px;
+  }
+  
