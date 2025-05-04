@@ -1,8 +1,7 @@
 /* Header styles (Mobile First) */
 
 .header {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: #7bb9a4;
   padding: 1rem 0;
   position: relative;
 }
@@ -18,7 +17,7 @@
 .header__logo {
   font-size: 1.25rem;
   font-weight: bold;
-  color: #1d4ed8;
+  color: #ffffff;
 }
 
 /* Botón hamburguesa bien alineado a la derecha */
@@ -35,7 +34,7 @@
   display: block;
   width: 30px;
   height: 3px;
-  background-color: #374151;
+  background-color: #ffffff;
   margin: 5px 0;
 }
 
@@ -43,12 +42,11 @@
 .header__nav {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  transition: all 0.3s ease;
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  background-color: #fff;
   padding: 0 10%;
   z-index: 10;
 }
@@ -67,20 +65,21 @@
 }
 
 .header__link {
-  color: #374151;
+  color: #fef3c7  ;
   font-weight: 500;
   transition: color 0.3s ease;
   text-decoration: none;
 }
 
 .header__link:hover {
-  color: #1d4ed8;
+  color: #fcd34d   ;
 }
 
 /* Menú abierto en móvil */
 .header__nav--open {
   max-height: 500px;
   padding-bottom: 1rem;
+  background-color: #7bb9a4;
 }
 
 /* Pantallas grandes */
