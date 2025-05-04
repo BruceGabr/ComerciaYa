@@ -1,53 +1,80 @@
 /* Fuente general y padding */
 .home {
   font-family: Arial, sans-serif;
-  padding: 2rem 0;
-}
-
-/* Contenedor reutilizable */
-.container {
-  max-width: 80%;
-  margin: 0 auto;
-  padding: 0;
 }
 
 /* Banner de Bienvenida  */
 
 .home__banner {
   text-align: center;
-  margin-bottom: 2rem;
+  padding: 3rem 0;
+  background-color: #7bb9a4;
+}
+@media (min-width: 768px) {
+  .home__banner {
+    padding: 5rem 0;
+  }
+}
+@media (min-width: 992px) {
+  .home__banner {
+    padding: 10rem 0;
+  }
+}
+
+.home__banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+}
+@media (min-width: 992px) {
+  .home__banner-content {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+}
+
+.home__banner-image {
+  max-width: 20rem;
+  margin: 0 auto;
+}
+
+.home__banner-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
 }
 
 .home__title {
+  color: #ffffff;
   font-size: 2.5rem;
   font-weight: bold;
+  line-height: 1.4;
 }
 
 .home__description {
+  color: #fef3c7;
   font-size: 1.2rem;
   margin-top: 0.5rem;
 }
 
 .home__cta {
-  background-color: #1d4ed8;
-  color: white;
+  max-width: 13rem;
+  background-color: #fef3c7;
+  color: #7bb9a4;
   border: none;
-  padding: 0.5rem 2rem;
+  padding: 0.5rem 1.5rem;
   font-size: 1.1rem;
   cursor: pointer;
-  margin-top: 1rem;
+  margin: 0 auto;
+  margin-top: 4rem;
   border-radius: 0.5rem;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
 }
 
 .home__cta:hover {
-  background-color: #2563eb;
+  background-color: #fcd34d;
 }
-.home__cta:focus {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-}
-
 
 /* Productos destacados section */
 

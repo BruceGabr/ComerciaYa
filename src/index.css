@@ -24,10 +24,14 @@ a {
   color: inherit;
 }
 
+img {
+  max-width: 100%;
+}
+
 .container {
-  max-width: 1200px;
+  width: 80%;
+  max-width: 70rem;
   margin: 0 auto;
-  padding: 2rem;
 }
 
 /* Estilos específicos para Home */

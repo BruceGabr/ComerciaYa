@@ -4,14 +4,6 @@
   padding: 0;
 }
 
-/* Contenedor reutilizable */
-.container {
-  width: 80%;
-  max-width: 70rem;
-  margin: 0 auto;
-  padding: 0;
-}
-
 /* Sección de bienvenida */
 .explorar__header {
   background-color: #f9fafb;

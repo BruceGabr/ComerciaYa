@@ -8,21 +8,22 @@
 
 .header__container {
   display: flex;
+  gap: 2rem;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1rem;
-  width: 100%;
 }
 
 .header__logo {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: bold;
   color: #ffffff;
 }
 
 /* Botón hamburguesa bien alineado a la derecha */
 .header__hamburger {
-  display: block;
+  position: relative;
+  width: 30px;
+  height: 24px;
   background: none;
   border: none;
   cursor: pointer;
@@ -65,14 +66,14 @@
 }
 
 .header__link {
-  color: #fef3c7  ;
+  color: #fef3c7;
   font-weight: 500;
   transition: color 0.3s ease;
   text-decoration: none;
 }
 
 .header__link:hover {
-  color: #fcd34d   ;
+  color: #fcd34d;
 }
 
 /* Menú abierto en móvil */
@@ -84,10 +85,6 @@
 
 /* Pantallas grandes */
 @media (min-width: 768px) {
-  .header__container {
-    padding: 0 2rem;
-  }
-
   .header__logo {
     font-size: 1.75rem;
   }
@@ -115,11 +112,6 @@
   }
 }
 /* Animación de hamburguesa a X */
-.header__hamburger {
-  position: relative;
-  width: 30px;
-  height: 24px;
-}
 
 .header__hamburger-line {
   position: absolute;
