@@ -8,7 +8,7 @@
 .home__banner {
   text-align: center;
   padding: 3rem 0;
-  background-color: #7bb9a4;
+  background: linear-gradient(to bottom, #077A7D, #3A9A9E 20%, #6EAAA0 40%, #A1B9A1 60%, #b2e4b2 80%, #DBFFCB);
 }
 @media (min-width: 768px) {
   .home__banner {
@@ -36,7 +36,7 @@
 .home__banner-image {
   max-width: 20rem;
   margin: 0 auto;
-  filter: drop-shadow(0px 20px 5px rgba(0, 0, 0, 0.3)); /* Sombra hacia abajo */
+  filter: drop-shadow(0px 15px 5px rgba(0, 0, 0, 0.3)); /* Sombra hacia abajo */
 }
 
 .home__banner-text {
@@ -51,17 +51,22 @@
   font-weight: bold;
   line-height: 1.4;
 }
+@media (min-width: 768px) {
+  .home__title {
+    color: #fef3c7;
+  }
+}
 
 .home__description {
-  color: #fef3c7;
+  color: #ffffff;
   font-size: 1.2rem;
   margin-top: 0.5rem;
 }
 
 .home__cta {
   max-width: 13rem;
-  background-color: #fef3c7;
-  color: #7bb9a4;
+  background-color: #077A7D;
+  color: #ffffff;
   border: none;
   padding: 0.5rem 1.5rem;
   font-size: 1.1rem;
@@ -73,7 +78,7 @@
 }
 
 .home__cta:hover {
-  background-color: #fcd34d;
+  background-color: #06202B;
 }
 
 /* Productos destacados section */
