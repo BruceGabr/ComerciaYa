@@ -10,11 +10,13 @@
   padding: 3rem 0;
   background: linear-gradient(to bottom, #077A7D, #3A9A9E 20%, #6EAAA0 40%, #A1B9A1 60%, #b2e4b2 80%, #DBFFCB);
 }
+
 @media (min-width: 768px) {
   .home__banner {
     padding: 5rem 0;
   }
 }
+
 @media (min-width: 992px) {
   .home__banner {
     padding: 10rem 0;
@@ -26,6 +28,7 @@
   flex-direction: column;
   gap: 5rem;
 }
+
 @media (min-width: 992px) {
   .home__banner-content {
     flex-direction: row;
@@ -36,7 +39,8 @@
 .home__banner-image {
   max-width: 20rem;
   margin: 0 auto;
-  filter: drop-shadow(0px 15px 5px rgba(0, 0, 0, 0.3)); /* Sombra hacia abajo */
+  filter: drop-shadow(0px 15px 5px rgba(0, 0, 0, 0.3));
+  /* Sombra hacia abajo */
 }
 
 .home__banner-text {
@@ -51,6 +55,7 @@
   font-weight: bold;
   line-height: 1.4;
 }
+
 @media (min-width: 768px) {
   .home__title {
     color: #fef3c7;
@@ -133,6 +138,102 @@
     max-width: 30%;
   }
 }
+
+/* Beneficios */
+
+.home__benefits {
+  padding: 3rem 1rem;
+  background-color: #fef3c7;
+  color: #1f2937;
+}
+
+.home__benefit-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.home__benefit-card {
+  padding: 2rem;
+  border-radius: 5rem;
+  text-align: center;
+}
+
+.home__benefit-card h4 {
+  margin: 1.5rem 0 1rem;
+  font-size: 1.2rem;
+  color: #b56401;
+}
+
+.home__benefit-card p {
+  font-size: 1rem;
+}
+
+.home__icon {
+  font-size: 3rem;
+  color: #077A7D;
+}
+
+/* Convocatoria */
+
+.home__join {
+  background-color: #6EAAA0;
+  color: white;
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.home__join-text {
+  font-size: 1.2rem;
+  margin: 1rem 0 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.home__cta--join {
+  background-color: #077A7D;
+  color: #ffffff;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.home__cta--join:hover {
+  background-color: #055e60;
+}
+
+/* Responsive beneficio cards */
+
+@media (min-width: 768px) {
+  .home__benefit-cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .home__benefit-card {
+    flex: 1 1 45%;
+    max-width: 45%;
+  }
+}
+@media (min-width: 1024px) {
+  .home__benefit-cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .home__benefit-card {
+    flex: 1 1 22.5%;
+    max-width: 22.5%;
+  }
+}
+
+
 
 /* Sección "¿Cómo funciona?" */
 
