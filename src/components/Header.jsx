@@ -14,7 +14,7 @@ function Header() {
   return (
     <header className="header">
       <div className="container header__container">
-        <a className="header__logo">EmprendeYa</a>
+        <a className="header__logo">ComerciaYa</a>
 
         {/* Ícono de menú hamburguesa (solo en móvil) */}
         <button

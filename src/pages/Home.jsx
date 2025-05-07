@@ -83,7 +83,7 @@ const Home = () => {
       <section className="home__benefits">
         <div className="container">
           <h3 className="home__section-title">
-            Beneficios de Usar EmprendeYa
+            Beneficios de Usar ComerciaYa
           </h3>
           <div className="home__benefit-cards">
             <div className="home__benefit-card">
@@ -126,7 +126,7 @@ const Home = () => {
         <div className="container home__about-content">
           <h3 className="home__section-title">¿Cómo funciona?</h3>
           <p className="home__about-text">
-            EmprendeYa es una plataforma que conecta a emprendedores con
+            ComerciaYa es una plataforma que conecta a emprendedores con
             personas que valoran lo auténtico y local. Aquí podrás descubrir
             productos y servicios únicos, apoyar negocios cercanos y fomentar el
             crecimiento de tu comunidad.
@@ -138,7 +138,7 @@ const Home = () => {
         <div className="container home__join-content">
           <h3 className="home__section-title">¿Tienes un Emprendimiento?</h3>
           <p className="home__join-text">
-            Forma parte de EmprendeYa y lleva tu negocio al siguiente nivel.
+            Forma parte de ComerciaYa y lleva tu negocio al siguiente nivel.
             Crea tu perfil, comparte tus productos y conecta con más clientes de
             manera gratuita.
           </p>
