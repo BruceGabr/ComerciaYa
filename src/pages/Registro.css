@@ -1,0 +1,115 @@
+/* registro.css */
+/* Estilo inspirado en la página de registro de Facebook, adaptado al estilo de tu sitio */
+
+.registro-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f2f2f2; /* Fondo general similar a Facebook */
+    padding: 2rem;
+  }
+  
+  .registro-box {
+    background-color: #fff;
+    padding: 2.5rem;
+    max-width: 400px;
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  }
+  
+  .registro-box h2 {
+    margin-bottom: 0.5rem;
+    font-size: 1.75rem;
+    color: #1c1e21; /* Color de texto principal */
+    text-align: center;
+  }
+  
+  .registro-box p {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    color: #606770;
+    text-align: center;
+  }
+  
+  .registro-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .registro-form input[type="text"],
+  .registro-form input[type="email"],
+  .registro-form input[type="password"],
+  .registro-form select,
+  .registro-form .fecha-group {
+    width: 100%;
+  }
+  
+  .registro-form input,
+  .registro-form select {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #dddfe2;
+    border-radius: 6px;
+    background-color: #f5f6f7;
+    box-sizing: border-box;
+  }
+  
+  .registro-form .fecha-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  
+  .registro-form .fecha-group select {
+    flex: 1;
+  }
+  
+  .registro-form .genero-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  .genero-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.95rem;
+    color: #1c1e21;
+  }
+  
+  .registro-form button {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    background-color: #077A7D; /* Azul Facebook */
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .registro-form button:hover {
+    background-color: #077A7D;
+  }
+  
+  /* Responsive */
+  @media (max-width: 480px) {
+    .registro-box {
+      padding: 1.5rem;
+    }
+    .registro-form .fecha-group {
+      flex-direction: column;
+    }
+    .registro-form .genero-group {
+      flex-direction: column;
+    }
+  }
+  
+  
