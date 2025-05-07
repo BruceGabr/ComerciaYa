@@ -19,13 +19,15 @@ const Home = () => {
             <h2 className="home__title">
               Explora la Creatividad de tu Comunidad
             </h2>
-            <p className="home__description">
-              Conoce los mejores productos y servicios de emprendedores locales.
-            </p>
-            <p className="home__description">
-              Descubre variedad, calidad y autenticidad en cada propuesta, y
-              apoya el crecimiento de tu comunidad con cada elección.
-            </p>
+            <div className="home__description">
+              <p>
+                Conoce los mejores productos y servicios de emprendedores locales.
+              </p>
+              <p>
+                Descubre variedad, calidad y autenticidad en cada propuesta, y
+                apoya el crecimiento de tu comunidad con cada elección.
+              </p>
+            </div>
             <Link to="/explorar" className="home__cta">
               Explorar Productos
             </Link>
@@ -97,25 +99,27 @@ const Home = () => {
       </section>
 
       {/* Sección de Convocatoria */}
-      <section className="home__join">
-        <div className="container">
-          <h3 className="home__section-title">¿Tienes un Emprendimiento?</h3>
-          <p className="home__join-text">
-            Únete a EmprendeLocal y muestra tu talento, creatividad y productos únicos. Es fácil, rápido y completamente gratuito.
+      <section className="home__about">
+        <div className="container home__about-content">
+          <h3 className="home__section-title">¿Cómo funciona?</h3>
+          <p className="home__about-text">
+            EmprendeLocal es una plataforma que conecta a emprendedores con personas que valoran lo auténtico y local. Aquí podrás descubrir productos y servicios únicos, apoyar negocios cercanos y fomentar el crecimiento de tu comunidad.
           </p>
-          <a href="/registro" className="home__cta home__cta--join">Quiero Unirme</a>
         </div>
       </section>
 
 
-      {/* Otra sección adicional, por ejemplo sobre la plataforma */}
-      <section className="home__about">
-        <h3 className="home__section-title">¿Cómo funciona?</h3>
-        <p>
-          EmprendeLocal conecta a emprendedores locales con clientes que buscan
-          productos y servicios únicos. ¡Únete a nuestra comunidad!
-        </p>
+
+      <section className="home__join">
+        <div className="container home__join-content">
+          <h3 className="home__section-title">¿Tienes un Emprendimiento?</h3>
+          <p className="home__join-text">
+            Forma parte de EmprendeLocal y lleva tu negocio al siguiente nivel. Crea tu perfil, comparte tus productos y conecta con más clientes de manera gratuita.
+          </p>
+          <a href="/registro" className="home__cta home__cta-join">Quiero Unirme</a>
+        </div>
       </section>
+
     </div>
   );
 };

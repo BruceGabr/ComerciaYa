@@ -10,6 +10,7 @@ import Perfil from "./pages/Perfil";
 import NuevoProducto from "./pages/NuevoProducto";
 import Reseñas from "./pages/Reseñas";
 import Dashboard from "./pages/Dashboard";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </main>
+      <Footer/>
     </AuthProvider>
   );
 }
