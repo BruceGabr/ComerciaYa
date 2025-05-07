@@ -8,11 +8,11 @@ const Footer = () => {
         <footer className="footer">
             <div className="footer__container container">
                 <p className="footer__text">
-                    © {new Date().getFullYear()} EmprendeLocal. Todos los derechos reservados.
+                    © {new Date().getFullYear()} EmprendeYa. Todos los derechos reservados.
                 </p>
                 <div className="footer__contact">
 
-                    <a className="header__logo">EmprendeLocal</a>
+                    <a className="header__logo">EmprendeYa</a>
                     <div className="footer__social">
                         <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="footer__social-link">
                             <i className="fab fa-facebook-f"></i>
