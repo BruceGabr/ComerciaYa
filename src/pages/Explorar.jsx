@@ -1,5 +1,7 @@
 import React from "react";
 import "./Explorar.css";
+import EmprendimientoCard from "../components/EmprendimientoCard";
+
 import artesaniasImg from "../assets/images/artesanias.webp";
 import comidaCaseraImg from "../assets/images/comida-casera.jpg";
 import productosNaturalesImg from "../assets/images/productos-naturales.webp";
@@ -51,20 +53,13 @@ const Explorar = () => {
             Emprendimientos Disponibles
           </h3>
           <div className="explorar__grid">
-            {/* Mapeando los emprendimientos */}
             {emprendimientos.map((emprendimiento) => (
-              <div key={emprendimiento.id} className="explorar__card">
-                <img
-                  src={emprendimiento.imagen}
-                  alt={emprendimiento.nombre}
-                  className="explorar__image"
-                />
-                <h4 className="explorar__name">{emprendimiento.nombre}</h4>
-                <p className="explorar__description">
-                  {emprendimiento.descripcion}
-                </p>
-                <button className="explorar__button">Ver más</button>
-              </div>
+              <EmprendimientoCard
+                key={emprendimiento.id}
+                nombre={emprendimiento.nombre}
+                imagen={emprendimiento.imagen}
+                descripcion={emprendimiento.descripcion}
+              />
             ))}
           </div>
         </div>
