@@ -1,7 +1,6 @@
-// src/pages/Registro.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Registro.css"; // Asegúrate de que Registro.css contenga los estilos .registro-container, .registro-box, .registro-form, etc.
+import "./Registro.css"; 
 
 function Registro() {
   const navigate = useNavigate();

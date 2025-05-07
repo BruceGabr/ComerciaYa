@@ -1,12 +1,9 @@
-/* registro.css */
-/* Estilo inspirado en la página de registro de Facebook, adaptado al estilo de tu sitio */
-
 .registro-container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f2f2f2; /* Fondo general similar a Facebook */
+    background-color: #f2f2f2; 
     padding: 2rem;
   }
   
@@ -23,7 +20,7 @@
   .registro-box h2 {
     margin-bottom: 0.5rem;
     font-size: 1.75rem;
-    color: #1c1e21; /* Color de texto principal */
+    color: #1c1e21; 
     text-align: center;
   }
   
@@ -87,7 +84,7 @@
     margin-top: 1rem;
     padding: 0.75rem;
     font-size: 1.1rem;
-    background-color: #077A7D; /* Azul Facebook */
+    background-color: #077A7D; 
     color: #fff;
     border: none;
     border-radius: 6px;
