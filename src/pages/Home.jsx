@@ -7,6 +7,7 @@ import productosNaturalesImg from "../assets/images/productos-naturales.webp";
 import bannerImg from "../assets/images/contabilidad.png";
 
 const Home = () => {
+  
   return (
     <div className="home">
       {/* Sección de Bienvenida */}
