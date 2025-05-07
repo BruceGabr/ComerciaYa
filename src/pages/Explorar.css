@@ -41,13 +41,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4); /* Superposición oscura */
+  background: rgba(0, 0, 0, 0.7); /* Superposición oscura */
   z-index: 1;
 }
 
 .explorar__section-title {
   font-size: 1.8rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   text-align: center;
   color: #fff; /* Color blanco para el texto */
   position: relative;

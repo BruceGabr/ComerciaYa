@@ -1,13 +1,38 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./Home.css"; // Crearemos este archivo para estilos
+import EmprendimientoCard from "../components/EmprendimientoCard";
+
 import artesaniasImg from "../assets/images/artesanias.webp";
 import comidaCaseraImg from "../assets/images/comida-casera.jpg";
 import productosNaturalesImg from "../assets/images/productos-naturales.webp";
 import bannerImg from "../assets/images/contabilidad.png";
 
 const Home = () => {
-  
+  const destacados = [
+    {
+      id: 1,
+      nombre: "Artesanías Peruanas",
+      imagen: artesaniasImg,
+      descripcion:
+        "Artesanías únicas elaboradas a mano con materiales locales. Perfectas para regalos o decoración.",
+    },
+    {
+      id: 2,
+      nombre: "Comida Casera de Mamá",
+      imagen: comidaCaseraImg,
+      descripcion:
+        "Disfruta de los sabores tradicionales de la comida casera peruana, con ingredientes frescos y naturales.",
+    },
+    {
+      id: 3,
+      nombre: "Productos Naturales",
+      imagen: productosNaturalesImg,
+      descripcion:
+        "Productos 100% naturales para el cuidado de tu piel, elaborados con hierbas y aceites orgánicos.",
+    },
+  ];
+
   return (
     <div className="home">
       {/* Sección de Bienvenida */}
@@ -22,7 +47,8 @@ const Home = () => {
             </h2>
             <div className="home__description">
               <p>
-                Conoce los mejores productos y servicios de emprendedores locales.
+                Conoce los mejores productos y servicios de emprendedores
+                locales.
               </p>
               <p>
                 Descubre variedad, calidad y autenticidad en cada propuesta, y
@@ -36,36 +62,19 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Sección de productos destacados */}
+      {/* Sección de emprendimientos destacados */}
       <section className="home__featured-products">
         <div className="container">
-          <h3 className="home__section-title">Productos Destacados</h3>
-          <div className="home__products">
-            {/* Simulando productos */}
-            <div className="home__product">
-              <img
-                src={artesaniasImg}
-                alt="Productos de artesanía"
-                className="home__image"
+          <h3 className="home__section-title">Emprendimientos Destacados</h3>
+          <div className="home__cards-grid">
+            {destacados.map((item) => (
+              <EmprendimientoCard
+                key={item.id}
+                nombre={item.nombre}
+                imagen={item.imagen}
+                descripcion={item.descripcion}
               />
-              <p>Producto 1</p>
-            </div>
-            <div className="home__product">
-              <img
-                src={comidaCaseraImg}
-                alt="Comida casera"
-                className="home__image"
-              />
-              <p>Producto 2</p>
-            </div>
-            <div className="home__product">
-              <img
-                src={productosNaturalesImg}
-                alt="Productos naturales"
-                className="home__image"
-              />
-              <p>Producto 3</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -73,27 +82,40 @@ const Home = () => {
       {/* Sección de Beneficios */}
       <section className="home__benefits">
         <div className="container">
-          <h3 className="home__section-title">Beneficios de Usar EmprendeLocal</h3>
+          <h3 className="home__section-title">
+            Beneficios de Usar EmprendeLocal
+          </h3>
           <div className="home__benefit-cards">
             <div className="home__benefit-card">
               <i className="fas fa-handshake home__icon"></i>
               <h4>Conexión directa</h4>
-              <p>Conecta fácilmente con clientes interesados en tus productos y servicios.</p>
+              <p>
+                Conecta fácilmente con clientes interesados en tus productos y
+                servicios.
+              </p>
             </div>
             <div className="home__benefit-card">
               <i className="fas fa-bullhorn home__icon"></i>
               <h4>Visibilidad gratuita</h4>
-              <p>Promociona tu emprendimiento sin costos y sin complicaciones.</p>
+              <p>
+                Promociona tu emprendimiento sin costos y sin complicaciones.
+              </p>
             </div>
             <div className="home__benefit-card">
               <i className="fas fa-edit home__icon"></i>
               <h4>Publicación fácil</h4>
-              <p>Sube tus productos o servicios en pocos pasos y empieza a vender.</p>
+              <p>
+                Sube tus productos o servicios en pocos pasos y empieza a
+                vender.
+              </p>
             </div>
             <div className="home__benefit-card">
               <i className="fas fa-seedling home__icon"></i>
               <h4>Apoya lo local</h4>
-              <p>Fomenta el crecimiento económico de tu comunidad participando activamente.</p>
+              <p>
+                Fomenta el crecimiento económico de tu comunidad participando
+                activamente.
+              </p>
             </div>
           </div>
         </div>
@@ -104,23 +126,27 @@ const Home = () => {
         <div className="container home__about-content">
           <h3 className="home__section-title">¿Cómo funciona?</h3>
           <p className="home__about-text">
-            EmprendeLocal es una plataforma que conecta a emprendedores con personas que valoran lo auténtico y local. Aquí podrás descubrir productos y servicios únicos, apoyar negocios cercanos y fomentar el crecimiento de tu comunidad.
+            EmprendeLocal es una plataforma que conecta a emprendedores con
+            personas que valoran lo auténtico y local. Aquí podrás descubrir
+            productos y servicios únicos, apoyar negocios cercanos y fomentar el
+            crecimiento de tu comunidad.
           </p>
         </div>
       </section>
-
-
 
       <section className="home__join">
         <div className="container home__join-content">
           <h3 className="home__section-title">¿Tienes un Emprendimiento?</h3>
           <p className="home__join-text">
-            Forma parte de EmprendeLocal y lleva tu negocio al siguiente nivel. Crea tu perfil, comparte tus productos y conecta con más clientes de manera gratuita.
+            Forma parte de EmprendeLocal y lleva tu negocio al siguiente nivel.
+            Crea tu perfil, comparte tus productos y conecta con más clientes de
+            manera gratuita.
           </p>
-          <a href="/registro" className="home__cta home__cta-join">Quiero Unirme</a>
+          <a href="/registro" className="home__cta home__cta-join">
+            Quiero Unirme
+          </a>
         </div>
       </section>
-
     </div>
   );
 };

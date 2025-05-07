@@ -8,7 +8,15 @@
 .home__banner {
   text-align: center;
   padding: 3rem 0;
-  background: linear-gradient(to bottom, #077A7D, #3A9A9E 20%, #6EAAA0 40%, #A1B9A1 60%, #b2e4b2 80%, #DBFFCB);
+  background: linear-gradient(
+    to bottom,
+    #077a7d,
+    #3a9a9e 20%,
+    #6eaaa0 40%,
+    #a1b9a1 60%,
+    #b2e4b2 80%,
+    #dbffcb
+  );
 }
 
 @media (min-width: 768px) {
@@ -19,7 +27,9 @@
 
 @media (min-width: 992px) {
   .home__banner {
-    padding: 10rem 0;
+    display: flex;
+    align-items: center;
+    height: 100vh;
   }
 }
 
@@ -70,7 +80,7 @@
 
 .home__cta {
   max-width: 13rem;
-  background-color: #077A7D;
+  background-color: #077a7d;
   color: #ffffff;
   border: none;
   padding: 0.5rem 1.5rem;
@@ -89,12 +99,13 @@
 /* Productos destacados section */
 
 .home__featured-products {
-  margin-top: 3rem;
+  padding: 2rem 0;
+  background: linear-gradient(to bottom, #dbffcb, #fef3c7);
 }
 
 .home__section-title {
   font-size: 1.8rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 3rem;
   text-align: center;
 }
 
@@ -104,48 +115,22 @@
   gap: 1.5rem;
 }
 
-.home__product {
-  background-color: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  padding-bottom: 1rem;
+.home__destacados {
+  padding: 40px 0;
 }
 
-.home__image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
-}
-
-.home__product p {
-  margin-top: 0.75rem;
-  font-weight: bold;
-  line-height: 1.4;
-}
-
-/* Responsive productos layout */
-
-@media (min-width: 768px) {
-  .home__products {
-    flex-direction: row;
-    justify-content: space-evenly;
-  }
-
-  .home__product {
-    flex: 1;
-    max-width: 30%;
-  }
+.home__cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
 }
 
 /* Beneficios */
 
 .home__benefits {
   padding: 3rem 1rem;
-  background: linear-gradient(to bottom, 
-  #fef3c7, #d8e4cd );
-
+  background: linear-gradient(to bottom, #fef3c7, #d8e4cd);
 
   color: #1f2937;
 }
@@ -175,10 +160,8 @@
 
 .home__icon {
   font-size: 3rem;
-  color: #077A7D;
+  color: #077a7d;
 }
-
-
 
 /* Responsive beneficio cards */
 
@@ -207,13 +190,10 @@
   }
 }
 
-
-
 /* Sección "¿Cómo funciona?" */
 
 .home__about {
-  background: linear-gradient(to bottom, 
-  #d8e4cd, #6EAAA0 );
+  background: linear-gradient(to bottom, #d8e4cd, #6eaaa0);
   color: white;
   text-align: center;
   padding: 2rem 1rem;
@@ -230,8 +210,7 @@
 /* Convocatoria */
 
 .home__join {
-  background: linear-gradient(to bottom, 
-  #6EAAA0, #077A7D );
+  background: linear-gradient(to bottom, #6eaaa0, #077a7d);
   color: white;
   text-align: center;
   padding: 2rem 1rem;
