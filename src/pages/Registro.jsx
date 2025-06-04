@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Registro.css"; 
+import { useAuth } from "../context/AuthContext";  // Importa el contexto
+import "./Registro.css";
 
 function Registro() {
   const navigate = useNavigate();
+  const { login } = useAuth();  // Obtenemos la función login del contexto
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -37,8 +39,13 @@ function Registro() {
       alert("Las contraseñas no coinciden");
       return;
     }
+
+    // Aquí puedes hacer tu llamada a backend o validar y guardar el usuario
     console.log("Datos registrados:", formData);
-    navigate("/login");
+
+    // Simular registro exitoso: hacer login y navegar a emprendimiento
+    login(); // Cambiamos estado a autenticado
+    navigate("/miemprendimiento");
   };
 
   return (
@@ -66,29 +73,65 @@ function Registro() {
 
           <label>Fecha de nacimiento:</label>
           <div className="fecha-group">
-            <select name="dia" value={formData.fechaNacimiento.dia} onChange={handleChange} required>
+            <select
+              name="dia"
+              value={formData.fechaNacimiento.dia}
+              onChange={handleChange}
+              required
+            >
               <option value="">Día</option>
               {[...Array(31)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>{i + 1}</option>
+                <option key={i + 1} value={i + 1}>
+                  {i + 1}
+                </option>
               ))}
             </select>
-            <select name="mes" value={formData.fechaNacimiento.mes} onChange={handleChange} required>
+            <select
+              name="mes"
+              value={formData.fechaNacimiento.mes}
+              onChange={handleChange}
+              required
+            >
               <option value="">Mes</option>
-              {["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"].map((m) => (
-                <option key={m} value={m}>{m}</option>
+              {[
+                "ene",
+                "feb",
+                "mar",
+                "abr",
+                "may",
+                "jun",
+                "jul",
+                "ago",
+                "sep",
+                "oct",
+                "nov",
+                "dic",
+              ].map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
               ))}
             </select>
-            <select name="año" value={formData.fechaNacimiento.año} onChange={handleChange} required>
+            <select
+              name="año"
+              value={formData.fechaNacimiento.año}
+              onChange={handleChange}
+              required
+            >
               <option value="">Año</option>
-              {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map((yr) => (
-                <option key={yr} value={yr}>{yr}</option>
-              ))}
+              {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(
+                (yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                )
+              )}
             </select>
           </div>
 
           <label>Género:</label>
           <div className="genero-group">
-            {['Mujer', 'Hombre', 'Sin Especificar'].map((g) => (
+            {["Mujer", "Hombre", "Sin Especificar"].map((g) => (
               <label key={g}>
                 <input
                   type="radio"
@@ -144,4 +187,3 @@ function Registro() {
 }
 
 export default Registro;
-

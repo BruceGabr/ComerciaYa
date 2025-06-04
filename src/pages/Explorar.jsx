@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Explorar.css";
 import EmprendimientoCard from "../components/EmprendimientoCard";
 
@@ -6,7 +6,13 @@ import artesaniasImg from "../assets/images/artesanias.webp";
 import comidaCaseraImg from "../assets/images/comida-casera.jpg";
 import productosNaturalesImg from "../assets/images/productos-naturales.webp";
 
+const STORAGE_KEY = "miEmprendimientoData";
+
 const Explorar = () => {
+  // Estado para emprendimiento dinámico guardado
+  const [emprendimientoUsuario, setEmprendimientoUsuario] = useState(null);
+
+  // Lista estática actual
   const emprendimientos = [
     {
       id: 1,
@@ -31,6 +37,23 @@ const Explorar = () => {
     },
   ];
 
+  useEffect(() => {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      const parsedData = JSON.parse(data);
+
+      // Convertir el objeto a formato compatible con EmprendimientoCard
+      // Por ejemplo: nombre, descripción, imagen (que no tenemos como URL, así que ponemos null o imagen placeholder)
+      setEmprendimientoUsuario({
+        id: "usuario",
+        nombre: "Mi Emprendimiento",
+        descripcion: parsedData.descripcion,
+        imagen: null, // Puedes poner una imagen placeholder si quieres
+        productos: parsedData.productos, // por si queremos usarlo después
+      });
+    }
+  }, []);
+
   return (
     <div className="explorar">
       {/* Sección principal */}
@@ -53,6 +76,17 @@ const Explorar = () => {
             Emprendimientos Disponibles
           </h3>
           <div className="explorar__grid">
+            {/* Mostrar emprendimiento del usuario si existe */}
+            {emprendimientoUsuario && (
+              <EmprendimientoCard
+                key={emprendimientoUsuario.id}
+                nombre={emprendimientoUsuario.nombre}
+                imagen={emprendimientoUsuario.imagen}
+                descripcion={emprendimientoUsuario.descripcion}
+              />
+            )}
+
+            {/* Mostrar los emprendimientos estáticos */}
             {emprendimientos.map((emprendimiento) => (
               <EmprendimientoCard
                 key={emprendimiento.id}

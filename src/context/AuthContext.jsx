@@ -1,21 +1,42 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Importamos useNavigate para redirigir en logout (opcional)
 
-// Crear contexto de autenticación
 const AuthContext = createContext();
 
-// Proveedor del contexto
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Inicializa el estado 'isAuthenticated' leyendo de localStorage.
+  // Esto hace que la sesión sea persistente entre recargas de página.
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      const saved = localStorage.getItem("isAuthenticated");
+      // Si "saved" es "true" (string), retorna true, de lo contrario, retorna false.
+      return saved === "true";
+    } catch (error) {
+      console.error("Error al leer isAuthenticated de localStorage:", error);
+      // Si hay un error (ej. localStorage no disponible), asumimos que no está autenticado.
+      return false;
+    }
+  });
+
+  const navigate = useNavigate(); // Hook para la navegación.
 
   const login = () => {
-    // Aquí va la lógica de inicio de sesión
     setIsAuthenticated(true);
+    localStorage.setItem("isAuthenticated", "true");
+    console.log("AuthContext: Usuario ha iniciado sesión. isAuthenticated:", true);
+    // Ya no es 'simulado', así que la redirección sucede.
   };
 
   const logout = () => {
-    // Aquí va la lógica de cierre de sesión
-    setIsAuthenticated(false);
+    setIsAuthenticated(false); // Cambia el estado a no autenticado
+    localStorage.setItem("isAuthenticated", "false"); // Actualiza localStorage
+    // Opcional: También podrías querer limpiar otros datos del usuario si los guardas
+    // localStorage.removeItem("miEmprendimientoData");
+    console.log("AuthContext: Usuario ha cerrado sesión. isAuthenticated:", false);
+
+    // Redirige al usuario a la página de login después de cerrar sesión
+    navigate("/login");
   };
 
   return (
@@ -25,5 +46,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Hook para usar el contexto
 export const useAuth = () => useContext(AuthContext);

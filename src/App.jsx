@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext"; // Importamos el contexto
+import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import Explorar from "./pages/Explorar";
@@ -10,6 +10,8 @@ import Perfil from "./pages/Perfil";
 import NuevoProducto from "./pages/NuevoProducto";
 import Reseñas from "./pages/Reseñas";
 import Dashboard from "./pages/Dashboard";
+import MiEmprendimiento from "./pages/MiEmprendimiento";
+import PrivateRoute from "./components/PrivateRoute";  // Importa PrivateRoute
 import Footer from "./components/Footer";
 
 function App() {
@@ -26,9 +28,19 @@ function App() {
           <Route path="/nuevo-producto" element={<NuevoProducto />} />
           <Route path="/reseñas" element={<Reseñas />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Protege la ruta miemprendimiento */}
+          <Route
+            path="/miemprendimiento"
+            element={
+              <PrivateRoute>
+                <MiEmprendimiento />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </main>
-      <Footer/>
+      <Footer />
     </AuthProvider>
   );
 }

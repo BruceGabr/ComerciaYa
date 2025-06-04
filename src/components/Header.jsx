@@ -1,3 +1,4 @@
+// src/components/Header.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from '../context/AuthContext'; // Importamos el hook de autenticación
@@ -42,6 +43,18 @@ function Header() {
 
             {isAuthenticated ? (
               <>
+                {/* NUEVA PESTAÑA: Mi Emprendimiento */}
+                <li className="header__item">
+                  <Link
+                    to="/miemprendimiento" // <--- La ruta a la página de tu emprendimiento
+                    className="header__link"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Mi Emprendimiento
+                  </Link>
+                </li>
+                {/* FIN DE LA NUEVA PESTAÑA */}
+
                 <li className="header__item">
                   <Link
                     to="/dashboard"
@@ -81,7 +94,10 @@ function Header() {
                 <li className="header__item">
                   <button
                     className="header__link header__logout-btn"
-                    onClick={handleLogout}
+                    onClick={() => {
+                      logout(); // Llama directamente a la función logout del contexto
+                      setIsMenuOpen(false); // Cierra el menú
+                    }}
                   >
                     Cerrar sesión
                   </button>
