@@ -1,12 +1,12 @@
 // src/pages/MiEmprendimiento.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import "./MiEmprendimiento.css";
+import { useAuth } from "../../context/AuthContext";
+import "./NuevoEmprendimiento.css";
 
 const STORAGE_KEY = "miEmprendimientoData";
 
-const MiEmprendimiento = () => {
+const NuevoEmprendimiento = () => {
   console.log("MiEmprendimiento renderizado"); // Debug
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -212,4 +212,4 @@ const MiEmprendimiento = () => {
   );
 };
 
-export default MiEmprendimiento;
+export default NuevoEmprendimiento;

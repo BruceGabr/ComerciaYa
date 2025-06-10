@@ -1,12 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./Home.css"; // Crearemos este archivo para estilos
-import EmprendimientoCard from "../components/EmprendimientoCard";
+import EmprendimientoCard from "../../components/emprendimientoCard/EmprendimientoCard";
 
-import artesaniasImg from "../assets/images/artesanias.webp";
-import comidaCaseraImg from "../assets/images/comida-casera.jpg";
-import productosNaturalesImg from "../assets/images/productos-naturales.webp";
-import bannerImg from "../assets/images/contabilidad.png";
+import artesaniasImg from "../../assets/images/artesanias.webp";
+import comidaCaseraImg from "../../assets/images/comida-casera.jpg";
+import productosNaturalesImg from "../../assets/images/productos-naturales.webp";
+import bannerImg from "../../assets/images/contabilidad.png";
 
 const Home = () => {
   const destacados = [
@@ -142,9 +142,9 @@ const Home = () => {
             Crea tu perfil, comparte tus productos y conecta con más clientes de
             manera gratuita.
           </p>
-          <a href="/registro" className="home__cta home__cta-join">
-            Quiero Unirme
-          </a>
+          <Link to="/registro" className="home__cta home__cta-join">
+          Quiero Unirme
+            </Link>
         </div>
       </section>
     </div>

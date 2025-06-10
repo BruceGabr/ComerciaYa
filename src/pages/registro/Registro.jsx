@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";  // Importa el contexto
+import { useAuth } from "../../context/AuthContext";  // Importa el contexto
 import "./Registro.css";
 
 function Registro() {

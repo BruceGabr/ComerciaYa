@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from '../context/AuthContext'; // Importamos el hook de autenticación
+import { useAuth } from '../../context/AuthContext'; // Importamos el hook de autenticación
 import './Header.css';
 
 function Header() {
@@ -19,9 +19,8 @@ function Header() {
 
         {/* Ícono de menú hamburguesa (solo en móvil) */}
         <button
-          className={`header__hamburger ${
-            isMenuOpen ? "header__hamburger--open" : ""
-          }`}
+          className={`header__hamburger ${isMenuOpen ? "header__hamburger--open" : ""
+            }`}
           onClick={toggleMenu}
         >
           <span className="header__hamburger-line"></span>
@@ -31,46 +30,35 @@ function Header() {
 
         <nav className={`header__nav ${isMenuOpen ? "header__nav--open" : ""}`}>
           <ul className="header__menu">
-            <li className="header__item">
-              <Link
-                to="/"
-                className="header__link"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Inicio
-              </Link>
-            </li>
+
 
             {isAuthenticated ? (
               <>
-                {/* NUEVA PESTAÑA: Mi Emprendimiento */}
                 <li className="header__item">
                   <Link
-                    to="/miemprendimiento" // <--- La ruta a la página de tu emprendimiento
+                    to="/explorar"
                     className="header__link"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Mi Emprendimiento
+                    Explorar
                   </Link>
                 </li>
-                {/* FIN DE LA NUEVA PESTAÑA */}
-
                 <li className="header__item">
                   <Link
                     to="/dashboard"
                     className="header__link"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Mis productos
+                    Mis Emprendimientos
                   </Link>
                 </li>
                 <li className="header__item">
                   <Link
-                    to="/nuevo-producto"
+                    to="/nuevoEmprendimiento"
                     className="header__link"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Añadir producto
+                    Añadir Emprendimiento
                   </Link>
                 </li>
                 <li className="header__item">
@@ -105,6 +93,15 @@ function Header() {
               </>
             ) : (
               <>
+                <li className="header__item">
+                  <Link
+                    to="/"
+                    className="header__link"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Inicio
+                  </Link>
+                </li>
                 <li className="header__item">
                   <Link
                     to="/explorar"

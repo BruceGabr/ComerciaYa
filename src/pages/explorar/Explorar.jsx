@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "./Explorar.css";
-import EmprendimientoCard from "../components/EmprendimientoCard";
+import EmprendimientoCard from "../../components/emprendimientoCard/EmprendimientoCard";
 
-import artesaniasImg from "../assets/images/artesanias.webp";
-import comidaCaseraImg from "../assets/images/comida-casera.jpg";
-import productosNaturalesImg from "../assets/images/productos-naturales.webp";
+import artesaniasImg from "../../assets/images/artesanias.webp";
+import comidaCaseraImg from "../../assets/images/comida-casera.jpg";
+import productosNaturalesImg from "../../assets/images/productos-naturales.webp";
 
 const STORAGE_KEY = "miEmprendimientoData";
 
