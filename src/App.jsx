@@ -11,6 +11,7 @@ import NuevoEmprendimiento from "./pages/nuevoEmprendimiento/NuevoEmprendimiento
 import Reseñas from "./pages/reseñas/Reseñas";
 import Dashboard from "./pages/dashboard/Dashboard";
 import PrivateRoute from "./routes/PrivateRoute";  // Importa PrivateRoute
+import PublicRoute from "./routes/PublicRoute";  // Importa PublicRoute
 import Footer from "./components/footer/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -21,16 +22,56 @@ function App() {
       <ScrollToTop />
       <main className="app">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/explorar" element={<Explorar />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/registro" element={<Registro />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/nuevoEmprendimiento" element={<NuevoEmprendimiento />} />
-          <Route path="/reseñas" element={<Reseñas />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          
-          {/* Protege la ruta nuevoEmprendimiento */}
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <Home />
+              </PublicRoute>} />
+          <Route
+            path="/explorar" element={<Explorar />} />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/registro"
+            element={
+              <PublicRoute>
+                <Registro />
+              </PublicRoute>
+            }
+          />
+
+          {/* Rutas privadas */}
+          <Route
+            path="/perfil"
+            element={
+              <PrivateRoute>
+                <Perfil />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reseñas"
+            element={
+              <PrivateRoute>
+                <Reseñas />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/nuevoEmprendimiento"
             element={
