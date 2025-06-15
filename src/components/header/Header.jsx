@@ -1,15 +1,64 @@
 // src/components/Header.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from '../../context/AuthContext'; // Importamos el hook de autenticación
+import { useAuth } from '../../context/AuthContext';
 import './Header.css';
 
+// Componente Navbar separado
+const Navbar = ({ isAuthenticated, logout, isMenuOpen, setIsMenuOpen }) => {
+  // Configuración de links para usuarios no autenticados
+  const guestLinks = [
+    { to: "/", label: "Inicio" },
+    { to: "/explorar", label: "Explorar" },
+    { to: "/registro", label: "Registrarse" },
+    { to: "/login", label: "Iniciar sesión" }
+  ];
+
+  // Configuración de links para usuarios autenticados
+  const authenticatedLinks = [
+    { to: "/explorar", label: "Explorar" }
+  ];
+
+  // Seleccionar los links según el estado de autenticación
+  const navLinks = isAuthenticated ? authenticatedLinks : guestLinks;
+
+  const handleLinkClick = () => {
+    setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsMenuOpen(false);
+  };
+
+  return (
+    <nav className={`header__nav ${isMenuOpen ? "header__nav--open" : ""}`}>
+      <ul className="header__menu">
+        {/* Mapeo de links dinámicos */}
+        {navLinks.map((link, index) => (
+          <li key={index} className="header__item">
+            <Link
+              to={link.to}
+              className="header__link"
+              onClick={handleLinkClick}
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+        
+      </ul>
+    </nav>
+  );
+};
+
+// Componente Header principal
 function Header() {
-  const { isAuthenticated, logout } = useAuth(); // Usamos el estado y la función de logout del contexto
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // Estado para controlar el menú
+  const { isAuthenticated, logout } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen); // Cambia el estado del menú al hacer clic en el ícono
+    setIsMenuOpen(!isMenuOpen);
   };
 
   return (
@@ -19,8 +68,7 @@ function Header() {
 
         {/* Ícono de menú hamburguesa (solo en móvil) */}
         <button
-          className={`header__hamburger ${isMenuOpen ? "header__hamburger--open" : ""
-            }`}
+          className={`header__hamburger ${isMenuOpen ? "header__hamburger--open" : ""}`}
           onClick={toggleMenu}
         >
           <span className="header__hamburger-line"></span>
@@ -28,111 +76,13 @@ function Header() {
           <span className="header__hamburger-line"></span>
         </button>
 
-        <nav className={`header__nav ${isMenuOpen ? "header__nav--open" : ""}`}>
-          <ul className="header__menu">
-
-
-            {isAuthenticated ? (
-              <>
-                <li className="header__item">
-                  <Link
-                    to="/explorar"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Explorar
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <Link
-                    to="/dashboard"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Mis Emprendimientos
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <Link
-                    to="/nuevoEmprendimiento"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Añadir Emprendimiento
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <Link
-                    to="/reseñas"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Reseñas recibidas
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <Link
-                    to="/perfil"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Mi perfil
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <button
-                    className="header__link header__logout-btn"
-                    onClick={() => {
-                      logout(); // Llama directamente a la función logout del contexto
-                      setIsMenuOpen(false); // Cierra el menú
-                    }}
-                  >
-                    Cerrar sesión
-                  </button>
-                </li>
-              </>
-            ) : (
-              <>
-                <li className="header__item">
-                  <Link
-                    to="/"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Inicio
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <Link
-                    to="/explorar"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Explorar
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <Link
-                    to="/registro"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Registrarse
-                  </Link>
-                </li>
-                <li className="header__item">
-                  <Link
-                    to="/login"
-                    className="header__link"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Iniciar sesión
-                  </Link>
-                </li>
-              </>
-            )}
-          </ul>
-        </nav>
+        {/* Componente Navbar */}
+        <Navbar 
+          isAuthenticated={isAuthenticated}
+          logout={logout}
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+        />
       </div>
     </header>
   );

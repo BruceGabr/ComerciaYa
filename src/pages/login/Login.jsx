@@ -15,8 +15,8 @@ function Login() {
   // Será útil si intentan acceder a /login estando ya logueados.
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("Login: Usuario ya autenticado, redirigiendo a /miemprendimiento");
-      navigate("/miemprendimiento");
+      console.log("Login: Usuario ya autenticado, redirigiendo a /dashboard");
+      navigate("/dashboard");
     }
   }, [isAuthenticated, navigate]);
 

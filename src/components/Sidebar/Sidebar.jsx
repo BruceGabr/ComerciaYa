@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import "./Sidebar.css";
 
-function Sidebar() {
+function Sidebar({ isExpanded, setIsExpanded }) {
   const { logout } = useAuth();
   const location = useLocation();
-  const [isExpanded, setIsExpanded] = useState(true);
 
   const navItems = [
     {
@@ -35,8 +34,8 @@ function Sidebar() {
         >
           <i className={`fas ${isExpanded ? 'fa-chevron-left' : 'fa-chevron-right'}`}></i>
         </button>
-        
       </div>
+      
       <hr className="sidebar__separator" />
       
       <ul className="sidebar__menu">
