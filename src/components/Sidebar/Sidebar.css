@@ -1,0 +1,132 @@
+/* Mobile first: Sidebar oculto */
+.sidebar {
+  display: none;
+}
+
+/* Sidebar visible en pantallas grandes */
+@media (min-width: 768px) {
+  .sidebar {
+    min-height: calc(100vh - 60px);
+    background-color: #077a7d;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+    overflow: hidden;
+  }
+
+  .sidebar--expanded {
+    width: 220px;
+  }
+
+  .sidebar--collapsed {
+    width: 70px;
+  }
+
+  .sidebar__header {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .sidebar__toggle {
+    background: none;
+    border: none;
+    color: #fef3c7;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 5px;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .sidebar__toggle:hover {
+    background-color: #055c5e;
+    color: #fcd34d;
+  }
+
+  .sidebar__menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+  }
+
+  .sidebar__item {
+    margin-bottom: 1rem;
+  }
+
+  .sidebar__link {
+    display: flex;
+    align-items: center;
+    color: #fef3c7;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.75rem 0.5rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    white-space: wrap;
+    min-height: 44px;
+    position: relative;
+  }
+
+  .sidebar__link:hover,
+  .sidebar__link--active {
+    background-color: #055c5e;
+  }
+
+  .sidebar__icon {
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .sidebar__label {
+    margin-left: 0.75rem;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar--collapsed .sidebar__label {
+    opacity: 0;
+  }
+
+  .sidebar__separator {
+    border: none;
+    border-top: 1px solid #ffffff66;
+    margin: 1rem 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar--collapsed .sidebar__separator {
+    opacity: 0.3;
+  }
+
+  .sidebar__logout {
+    background: none;
+    border: none;
+    color: #fef3c7;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-height: 44px;
+    position: relative;
+  }
+
+  .sidebar__logout:hover {
+    color: #fcd34d;
+    background-color: #055c5e;
+  }
+
+  /* Tooltips simples usando solo el atributo title del navegador */
+  .sidebar--collapsed .sidebar__link,
+  .sidebar--collapsed .sidebar__logout {
+    /* Los tooltips se manejan automáticamente con el atributo title */
+  }
+}

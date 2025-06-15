@@ -58,3 +58,33 @@ img {
   font-size: 1.25rem;
   color: #4b5563;
 }
+
+/* Layout principal */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Contenedor para sidebar y contenido principal */
+.app-content {
+  display: flex;
+  flex: 1;
+}
+
+/* Contenido principal */
+.main-content {
+  flex: 1;
+  /* Opcional: agregar padding para separar del borde */
+}
+
+/* En mobile, el contenido principal ocupa todo el ancho */
+@media (max-width: 767px) {
+  .app-content {
+    flex-direction: column;
+  }
+  
+  .main-content {
+    padding: 0.5rem;
+  }
+}
