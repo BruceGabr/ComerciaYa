@@ -1,15 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+
 import axios from 'axios'; // Importa axios
+
+import bgLogin from "../../assets/images/bg-login.webp";
+import "./Login.css";
+
 
 function Login() {
   console.log("Login renderizado");
   const [correo, setCorreo] = useState("");
   const [contraseña, setContraseña] = useState("");
   const [mensaje, setMensaje] = useState("");
+
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
+
+
+
+  // Precargar imagen de fondo
+  useEffect(() => {
+    const img = new Image();
+    img.src = bgLogin;
+  }, []);
+
+  // Redirigir si el usuario ya está autenticado
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -21,6 +37,7 @@ function Login() {
   const handleSubmit = async (e) => { // Marca la función como async
     e.preventDefault();
     setMensaje("Iniciando sesión..."); // Muestra el mensaje mientras se procesa
+
 
     try {
       const response = await axios.post('http://localhost:5000/api/login', { // URL de tu backend
@@ -43,10 +60,12 @@ function Login() {
       } else {
         setMensaje("Ocurrió un error al intentar iniciar sesión. Inténtalo más tarde.");
       }
+
     }
   };
 
   return (
+
     <div style={{
       display: "flex",
       justifyContent: "center",
@@ -68,6 +87,7 @@ function Login() {
         <h2>Iniciar Sesión</h2>
         <p>Ingresa con tu cuenta para gestionar tus productos o servicios.</p>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+
           <input
             type="email"
             name="correo"
@@ -75,15 +95,9 @@ function Login() {
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
             required
-            style={{
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #dddfe2",
-              borderRadius: "6px",
-              backgroundColor: "#f5f6f7",
-              boxSizing: "border-box"
-            }}
+            className="form-input"
           />
+
           <input
             type="password"
             name="contraseña"
@@ -91,48 +105,31 @@ function Login() {
             value={contraseña}
             onChange={(e) => setContraseña(e.target.value)}
             required
-            style={{
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid #dddfe2",
-              borderRadius: "6px",
-              backgroundColor: "#f5f6f7",
-              boxSizing: "border-box"
-            }}
+            className="form-input"
           />
-          <button
-            type="submit"
-            style={{
-              marginTop: "1rem",
-              padding: "0.75rem",
-              fontSize: "1.1rem",
-              backgroundColor: "#077A7D",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              transition: "background-color 0.3s ease"
-            }}
-            onMouseOver={e => (e.currentTarget.style.backgroundColor = "#055e60")}
-            onMouseOut={e => (e.currentTarget.style.backgroundColor = "#077A7D")}
-          >
+
+          <button type="submit" className="submit-button">
             Iniciar Sesión
           </button>
         </form>
+
         {mensaje && (
+
           <div style={{
             marginTop: "1rem",
             color: mensaje.includes("inválidas") || mensaje.includes("error") ? "#c0392b" : "#077A7D",
             fontWeight: "bold"
           }}>
+
             {mensaje}
           </div>
         )}
-        <p style={{ marginTop: "1rem" }}>
-          <a href="/forgot-password" style={{ color: "#077A7D", textDecoration: "none", fontSize: "0.95rem" }}>
-            ¿Has olvidado la contraseña?
+
+        <div className="forgot-password">
+          <a href="/forgot-password" className="forgot-password-link">
+            ¿Olvidaste tu contraseña?
           </a>
-        </p>
+        </div>
       </div>
     </div>
   );
