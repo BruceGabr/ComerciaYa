@@ -1,18 +1,16 @@
-// src/pages/Login.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import axios from 'axios'; // Importa axios
 
 function Login() {
   console.log("Login renderizado");
   const [correo, setCorreo] = useState("");
   const [contraseña, setContraseña] = useState("");
   const [mensaje, setMensaje] = useState("");
-  const { isAuthenticated, login } = useAuth(); // isAuthenticated ahora viene del estado real
+  const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
 
-  // Este useEffect redirige si el usuario ya está autenticado.
-  // Será útil si intentan acceder a /login estando ya logueados.
   useEffect(() => {
     if (isAuthenticated) {
       console.log("Login: Usuario ya autenticado, redirigiendo a /dashboard");
@@ -20,16 +18,31 @@ function Login() {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { // Marca la función como async
     e.preventDefault();
+    setMensaje("Iniciando sesión..."); // Muestra el mensaje mientras se procesa
 
-    // Aquí iría tu lógica de validación de credenciales con un backend.
-    // Por ahora, simulamos un login exitoso si los campos no están vacíos.
-    if (correo.trim() !== "" && contraseña.trim() !== "") {
-      login(); // Llama a la función login del contexto (que ahora es funcional)
-      setMensaje("Iniciando sesión..."); // Mensaje normal
-    } else {
-      setMensaje("Credenciales inválidas. Por favor, ingresa tu correo y contraseña.");
+    try {
+      const response = await axios.post('http://localhost:5000/api/login', { // URL de tu backend
+        correo,
+        contraseña,
+      });
+
+      if (response.status === 200) {
+        setMensaje("Inicio de sesión exitoso.");
+        login(); // Llama a la función login del contexto para cambiar el estado de autenticación
+        navigate("/dashboard"); // Redirige al dashboard
+      } else {
+        // Esto rara vez se activará si el backend maneja bien los errores con códigos de estado 4xx
+        setMensaje("Credenciales inválidas. Inténtalo de nuevo.");
+      }
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error.response?.data || error.message);
+      if (error.response && error.response.status === 400) {
+        setMensaje(error.response.data.message || "Credenciales inválidas. Por favor, verifica tu correo y contraseña.");
+      } else {
+        setMensaje("Ocurrió un error al intentar iniciar sesión. Inténtalo más tarde.");
+      }
     }
   };
 
@@ -52,7 +65,7 @@ function Login() {
         fontFamily: "Arial, sans-serif",
         textAlign: "center"
       }}>
-        <h2>Iniciar Sesión</h2> {/* Título sin "Modo de Prueba" */}
+        <h2>Iniciar Sesión</h2>
         <p>Ingresa con tu cuenta para gestionar tus productos o servicios.</p>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           <input
@@ -109,7 +122,7 @@ function Login() {
         {mensaje && (
           <div style={{
             marginTop: "1rem",
-            color: mensaje.includes("inválidas") ? "#c0392b" : "#077A7D",
+            color: mensaje.includes("inválidas") || mensaje.includes("error") ? "#c0392b" : "#077A7D",
             fontWeight: "bold"
           }}>
             {mensaje}
