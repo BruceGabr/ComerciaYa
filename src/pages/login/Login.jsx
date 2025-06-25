@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-
-import axios from 'axios'; // Importa axios
-
+import axios from 'axios';
 import bgLogin from "../../assets/images/bg-login.webp";
 import "./Login.css";
 
-
 function Login() {
   console.log("Login renderizado");
-  const [correo, setCorreo] = useState("");
-  const [contraseña, setContraseña] = useState("");
+  
+  const [formData, setFormData] = useState({
+    correo: "",
+    contraseña: ""
+  });
   const [mensaje, setMensaje] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
-
-
 
   // Precargar imagen de fondo
   useEffect(() => {
@@ -26,7 +25,6 @@ function Login() {
   }, []);
 
   // Redirigir si el usuario ya está autenticado
-
   useEffect(() => {
     if (isAuthenticated) {
       console.log("Login: Usuario ya autenticado, redirigiendo a /dashboard");
@@ -34,23 +32,30 @@ function Login() {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e) => { // Marca la función como async
-    e.preventDefault();
-    setMensaje("Iniciando sesión..."); // Muestra el mensaje mientras se procesa
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMensaje("Iniciando sesión...");
 
     try {
-      const response = await axios.post('http://localhost:5000/api/login', { // URL de tu backend
-        correo,
-        contraseña,
+      const response = await axios.post('http://localhost:5000/api/login', {
+        correo: formData.correo,
+        contraseña: formData.contraseña,
       });
 
       if (response.status === 200) {
         setMensaje("Inicio de sesión exitoso.");
-        login(); // Llama a la función login del contexto para cambiar el estado de autenticación
-        navigate("/dashboard"); // Redirige al dashboard
+        login();
+        navigate("/dashboard");
       } else {
-        // Esto rara vez se activará si el backend maneja bien los errores con códigos de estado 4xx
         setMensaje("Credenciales inválidas. Inténtalo de nuevo.");
       }
     } catch (error) {
@@ -60,67 +65,69 @@ function Login() {
       } else {
         setMensaje("Ocurrió un error al intentar iniciar sesión. Inténtalo más tarde.");
       }
-
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const getMensajeClass = () => {
+    if (mensaje.includes("inválidas") || mensaje.includes("error") || mensaje.includes("Ocurrió")) {
+      return "login-message error";
+    }
+    if (mensaje.includes("exitoso")) {
+      return "login-message success";
+    }
+    return "login-message loading";
+  };
+
   return (
-
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      minHeight: "100vh",
-      backgroundColor: "#f2f2f2",
-      padding: "2rem"
-    }}>
-      <div style={{
-        backgroundColor: "#fff",
-        padding: "2.5rem",
-        maxWidth: "400px",
-        width: "100%",
-        borderRadius: "8px",
-        boxShadow: "0 0 12px rgba(0, 0, 0, 0.1)",
-        fontFamily: "Arial, sans-serif",
-        textAlign: "center"
-      }}>
-        <h2>Iniciar Sesión</h2>
-        <p>Ingresa con tu cuenta para gestionar tus productos o servicios.</p>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-
+    <div className="login-container">
+      <img 
+        src={bgLogin} 
+        alt="Background" 
+        className="background-image"
+      />
+      
+      <div className="login-box">
+        <h2 className="login-title">Iniciar Sesión</h2>
+        <p className="login-subtitle">
+          Ingresa con tu cuenta para gestionar tus productos o servicios.
+        </p>
+        
+        <form onSubmit={handleSubmit} className="login-form">
           <input
             type="email"
             name="correo"
             placeholder="Correo electrónico"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
+            value={formData.correo}
+            onChange={handleInputChange}
             required
             className="form-input"
+            disabled={isLoading}
           />
 
           <input
             type="password"
             name="contraseña"
             placeholder="Contraseña"
-            value={contraseña}
-            onChange={(e) => setContraseña(e.target.value)}
+            value={formData.contraseña}
+            onChange={handleInputChange}
             required
             className="form-input"
+            disabled={isLoading}
           />
 
-          <button type="submit" className="submit-button">
-            Iniciar Sesión
+          <button 
+            type="submit" 
+            className={`submit-button ${isLoading ? 'loading' : ''}`}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
 
         {mensaje && (
-
-          <div style={{
-            marginTop: "1rem",
-            color: mensaje.includes("inválidas") || mensaje.includes("error") ? "#c0392b" : "#077A7D",
-            fontWeight: "bold"
-          }}>
-
+          <div className={getMensajeClass()}>
             {mensaje}
           </div>
         )}
