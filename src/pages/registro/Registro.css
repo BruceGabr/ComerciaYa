@@ -1,18 +1,34 @@
 /* Contenedor principal */
 .registro-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #f2f2f2 0%, #e8e8e8 100%);
-  padding: 2rem;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  padding: 3rem 2rem;
+  background-color: var(--background-light, #f5f6f7);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Arial', sans-serif;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-@media (min-width: 768px) {
+@media (min-width: 480px) {
   .registro-container {
-    height: 80vh;
+    padding: 5rem 2rem;
   }
 }
 
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Caja de registro */
 .registro-box {
   background-color: #fff;
   padding: 2.5rem;
@@ -22,9 +38,22 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
+  z-index: 1;
+  animation: scaleIn 0.4s ease-out;
 }
 
-/* Header - Manteniendo compatibilidad con el CSS original */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Header */
 .registro-box h2 {
   margin-bottom: 0.5rem;
   font-size: 1.75rem;
@@ -61,6 +90,9 @@
 /* Contenido de pasos */
 .step-content {
   animation: fadeInSlide 0.4s ease-out;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes fadeInSlide {
@@ -136,6 +168,11 @@
   background-color: #ffeaea;
 }
 
+.form-group input:required:valid:not(:placeholder-shown) {
+  border-color: #28a745;
+  background-color: #f8fff8;
+}
+
 /* Labels */
 .form-group label {
   display: block;
@@ -184,15 +221,18 @@
   width: auto;
   margin: 0;
   cursor: pointer;
+  min-width: 16px;
+  height: 16px;
 }
 
 /* Checkbox group */
 .checkbox-group {
-  margin-left: 1rem;
+  margin-top: 1rem;
 }
 
 .checkbox-label {
   display: flex;
+  align-items: flex-start;
   gap: 0.5rem;
   cursor: pointer;
   font-size: 0.9rem;
@@ -205,6 +245,16 @@
   margin: 0;
   cursor: pointer;
   margin-top: 2px;
+  min-width: 16px;
+  height: 16px;
+}
+
+.checkmark {
+  /* Placeholder para futuros estilos personalizados del checkbox */
+}
+
+.radio-checkmark {
+  /* Placeholder para futuros estilos personalizados del radio */
 }
 
 /* Password strength indicator */
@@ -322,6 +372,16 @@
   justify-content: space-between;
 }
 
+/* Cuando solo hay un botón (primer paso) */
+.button-group:has(.btn-primary:only-child) {
+  justify-content: flex-end;
+}
+
+/* Fallback para navegadores que no soportan :has() */
+.button-group .btn-primary:only-child {
+  margin-left: auto;
+}
+
 .btn-primary,
 .btn-secondary {
   padding: 0.875rem 2rem;
@@ -341,7 +401,6 @@
   background: linear-gradient(135deg, #077A7D 0%, #0a9a9e 100%);
   color: #fff;
   flex: 1;
-  margin-left: auto;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -370,9 +429,8 @@
   box-shadow: none;
 }
 
-/* Cuando solo hay un botón (primer paso) */
-.button-group:has(.btn-primary:only-child) {
-  justify-content: flex-end;
+.btn-primary:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
 }
 
 /* Mensajes */
@@ -417,89 +475,17 @@
   font-weight: 500;
 }
 
-/* Animaciones adicionales */
-.registro-box {
-  animation: scaleIn 0.4s ease-out;
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .registro-box {
-    padding: 2rem;
-    max-width: 100%;
-  }
-  
-  .header h2 {
-    font-size: 1.75rem;
-  }
-  
-  .step-content h3 {
-    font-size: 1.3rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .registro-box {
-    padding: 1.5rem;
-  }
-  
-  .form-row {
-    flex-direction: column;
-    gap: 0;
-  }
-  
-  .form-row .form-group {
-    margin-bottom: 1rem;
-  }
-  
-  .fecha-group {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .genero-group {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .button-group {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    margin: 0 !important;
-  }
-  
-  .button-group:has(.btn-primary:only-child) {
-    justify-content: stretch;
-  }
-}
-
 /* Estados de hover mejorados */
 @media (hover: hover) {
   .form-group input:hover,
   .form-group select:hover {
     border-color: #bbb;
   }
-  
+
   .radio-label:hover {
     background-color: rgba(7, 122, 125, 0.05);
   }
-  
+
   .checkbox-label:hover {
     color: #1c1e21;
   }
@@ -518,43 +504,61 @@
   outline-offset: -2px;
 }
 
-/* Mejoras de accesibilidad */
 .radio-label input[type="radio"]:focus,
 .checkbox-label input[type="checkbox"]:focus {
   outline: 2px solid #077A7D;
   outline-offset: 2px;
 }
 
-/* Estados de loading */
-.btn-primary:disabled {
-  background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+/* Responsive Design */
+@media (max-width: 768px) {
+  .genero-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 
-/* Transiciones suaves para cambios de paso */
-.step-content {
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-}
 
-/* Estilos para campos requeridos */
-.form-group input:required:invalid {
+
+/* Estilos adicionales para mejorar la experiencia */
+.form-group input:required:invalid:not(:focus):not(:placeholder-shown) {
   box-shadow: none;
 }
 
-.form-group input:required:valid {
-  border-color: #28a745;
-  background-color: #f8fff8;
+/* Animación para transiciones suaves entre pasos */
+.step-content {
+  opacity: 1;
+  transform: translateX(0);
 }
 
-/* Personalización del scroll en dispositivos que lo soporten */
-@media (max-height: 600px) {
-  .registro-container {
-    align-items: flex-start;
-    padding: 1rem;
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .step-content,
+  .registro-box,
+  .message,
+  .btn-primary,
+  .btn-secondary,
+  .form-group input,
+  .form-group select,
+  .progress-fill {
+    animation: none;
+    transition: none;
   }
-  
-  .registro-box {
-    margin: 1rem 0;
-  }
+}
+
+/* Estilos para estados de carga */
+.btn-primary:disabled::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
