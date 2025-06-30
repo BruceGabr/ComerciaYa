@@ -1,112 +1,564 @@
+/* Contenedor principal */
 .registro-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f2f2f2; 
-    padding: 2rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 2rem;
+  background-color: var(--background-light, #f5f6f7);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Arial', sans-serif;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+@media (min-width: 480px) {
+  .registro-container {
+    padding: 5rem 2rem;
   }
-  
-  .registro-box {
-    background-color: #fff;
-    padding: 2.5rem;
-    max-width: 400px;
-    width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-    font-family: Arial, sans-serif;
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Caja de registro */
+.registro-box {
+  background-color: #fff;
+  padding: 2.5rem;
+  max-width: 30rem;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  animation: scaleIn 0.4s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
   }
-  
-  .registro-box h2 {
-    margin-bottom: 0.5rem;
-    font-size: 1.75rem;
-    color: #1c1e21; 
-    text-align: center;
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
-  
-  .registro-box p {
-    margin-bottom: 1.5rem;
-    font-size: 1rem;
-    color: #606770;
-    text-align: center;
+}
+
+/* Header */
+.registro-box h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  color: #1c1e21;
+  text-align: center;
+  font-weight: 600;
+}
+
+.registro-box > p {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  color: #606770;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Barra de progreso */
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e4e6ea;
+  border-radius: 2px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #077A7D 0%, #0a9a9e 100%);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* Contenido de pasos */
+.step-content {
+  animation: fadeInSlide 0.4s ease-out;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
   }
-  
-  .registro-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
-  
-  .registro-form input[type="text"],
-  .registro-form input[type="email"],
-  .registro-form input[type="password"],
-  .registro-form select,
-  .registro-form .fecha-group {
-    width: 100%;
+}
+
+.step-content h3 {
+  font-size: 1.5rem;
+  color: #1c1e21;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.step-content > p {
+  color: #606770;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* Formulario */
+.registro-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Inputs */
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.875rem;
+  font-size: 1rem;
+  border: 2px solid #dddfe2;
+  border-radius: 8px;
+  background-color: #f5f6f7;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #077A7D;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(7, 122, 125, 0.1);
+}
+
+.form-group input.error,
+.form-group select.error {
+  border-color: #e74c3c;
+  background-color: #ffeaea;
+}
+
+.form-group input:required:valid:not(:placeholder-shown) {
+  border-color: #28a745;
+  background-color: #f8fff8;
+}
+
+/* Labels */
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #1c1e21;
+  font-size: 0.95rem;
+}
+
+/* Fecha group */
+.fecha-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fecha-group select {
+  flex: 1;
+}
+
+/* Género group */
+.genero-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #1c1e21;
+  font-weight: normal !important;
+  margin-bottom: 0 !important;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.radio-label:hover {
+  background-color: #f0f0f0;
+}
+
+.radio-label input[type="radio"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+  min-width: 16px;
+  height: 16px;
+}
+
+/* Checkbox group */
+.checkbox-group {
+  margin-top: 1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #606770;
+  line-height: 1.4;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+  margin-top: 2px;
+  min-width: 16px;
+  height: 16px;
+}
+
+.checkmark {
+  /* Placeholder para futuros estilos personalizados del checkbox */
+}
+
+.radio-checkmark {
+  /* Placeholder para futuros estilos personalizados del radio */
+}
+
+/* Password strength indicator */
+.password-strength {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background-color: #e4e6ea;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  width: 0;
+}
+
+.strength-1 .strength-fill {
+  width: 33%;
+  background-color: #e74c3c;
+}
+
+.strength-2 .strength-fill {
+  width: 66%;
+  background-color: #f39c12;
+}
+
+.strength-3 .strength-fill {
+  width: 100%;
+  background-color: #27ae60;
+}
+
+.strength-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 50px;
+}
+
+.strength-1 .strength-text {
+  color: #e74c3c;
+}
+
+.strength-2 .strength-text {
+  color: #f39c12;
+}
+
+.strength-3 .strength-text {
+  color: #27ae60;
+}
+
+/* Summary card */
+.summary-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.summary-section {
+  margin-bottom: 1rem;
+}
+
+.summary-section:last-child {
+  margin-bottom: 0;
+}
+
+.summary-section h4 {
+  color: #077A7D;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.summary-section p {
+  margin-bottom: 0.3rem;
+  color: #1c1e21;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.summary-section p:last-child {
+  margin-bottom: 0;
+}
+
+/* Final message */
+.final-message {
+  text-align: center;
+  padding: 1rem;
+  background-color: #e8f5e8;
+  border-radius: 6px;
+  border-left: 4px solid #077A7D;
+}
+
+.final-message p {
+  margin: 0;
+  color: #2c5530;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Botones */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: space-between;
+}
+
+/* Cuando solo hay un botón (primer paso) */
+.button-group:has(.btn-primary:only-child) {
+  justify-content: flex-end;
+}
+
+/* Fallback para navegadores que no soportan :has() */
+.button-group .btn-primary:only-child {
+  margin-left: auto;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.875rem 2rem;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #077A7D 0%, #0a9a9e 100%);
+  color: #fff;
+  flex: 1;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #065d60 0%, #087a7e 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(7, 122, 125, 0.3);
+}
+
+.btn-secondary {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 2px solid #dee2e6;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+}
+
+/* Mensajes */
+.message {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  
-  .registro-form input,
-  .registro-form select {
-    padding: 0.75rem;
-    font-size: 1rem;
-    border: 1px solid #dddfe2;
-    border-radius: 6px;
-    background-color: #f5f6f7;
-    box-sizing: border-box;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .registro-form .fecha-group {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Error messages */
+.error-message {
+  display: block;
+  color: #e74c3c;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+/* Estados de hover mejorados */
+@media (hover: hover) {
+  .form-group input:hover,
+  .form-group select:hover {
+    border-color: #bbb;
   }
-  
-  .registro-form .fecha-group select {
-    flex: 1;
+
+  .radio-label:hover {
+    background-color: rgba(7, 122, 125, 0.05);
   }
-  
-  .registro-form .genero-group {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-  
-  .genero-group label {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.95rem;
+
+  .checkbox-label:hover {
     color: #1c1e21;
   }
-  
-  .registro-form button {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    font-size: 1.1rem;
-    background-color: #077A7D; 
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+}
+
+/* Focus visible para accesibilidad */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 2px solid #077A7D;
+  outline-offset: 2px;
+}
+
+.form-group input:focus-visible,
+.form-group select:focus-visible {
+  outline: 2px solid #077A7D;
+  outline-offset: -2px;
+}
+
+.radio-label input[type="radio"]:focus,
+.checkbox-label input[type="checkbox"]:focus {
+  outline: 2px solid #077A7D;
+  outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .genero-group {
+    flex-direction: column;
+    gap: 0.5rem;
   }
-  
-  .registro-form button:hover {
-    background-color: #077A7D;
+}
+
+
+
+/* Estilos adicionales para mejorar la experiencia */
+.form-group input:required:invalid:not(:focus):not(:placeholder-shown) {
+  box-shadow: none;
+}
+
+/* Animación para transiciones suaves entre pasos */
+.step-content {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .step-content,
+  .registro-box,
+  .message,
+  .btn-primary,
+  .btn-secondary,
+  .form-group input,
+  .form-group select,
+  .progress-fill {
+    animation: none;
+    transition: none;
   }
-  
-  /* Responsive */
-  @media (max-width: 480px) {
-    .registro-box {
-      padding: 1.5rem;
-    }
-    .registro-form .fecha-group {
-      flex-direction: column;
-    }
-    .registro-form .genero-group {
-      flex-direction: column;
-    }
-  }
-  
-  
+}
+
+/* Estilos para estados de carga */
+.btn-primary:disabled::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
