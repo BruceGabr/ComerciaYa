@@ -15,7 +15,7 @@ function Login() {
   const [mensaje, setMensaje] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, loading } = useAuth();
   const navigate = useNavigate();
 
   // Precargar imagen de fondo
@@ -26,11 +26,11 @@ function Login() {
 
   // Redirigir si el usuario ya está autenticado
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!loading && isAuthenticated) {
       console.log("Login: Usuario ya autenticado, redirigiendo a /dashboard");
       navigate("/dashboard");
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, loading]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -52,18 +52,48 @@ function Login() {
       });
 
       if (response.status === 200) {
-        setMensaje("Inicio de sesión exitoso.");
-        login();
-        navigate("/dashboard");
+        const { token, user } = response.data;
+        
+        // Verificar que recibimos el token y datos del usuario
+        if (token && user) {
+          setMensaje("Inicio de sesión exitoso.");
+          
+          // Usar la función login del AuthContext con los datos JWT
+          login(token, user);
+          
+          // Redirigir después de un breve delay para mostrar el mensaje
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1000);
+        } else {
+          setMensaje("Error: Respuesta del servidor incompleta.");
+        }
       } else {
         setMensaje("Credenciales inválidas. Inténtalo de nuevo.");
       }
     } catch (error) {
       console.error("Error al iniciar sesión:", error.response?.data || error.message);
-      if (error.response && error.response.status === 400) {
-        setMensaje(error.response.data.message || "Credenciales inválidas. Por favor, verifica tu correo y contraseña.");
+      
+      if (error.response) {
+        const { status, data } = error.response;
+        
+        switch (status) {
+          case 400:
+            setMensaje(data.message || "Credenciales inválidas. Por favor, verifica tu correo y contraseña.");
+            break;
+          case 401:
+            setMensaje("Credenciales inválidas. Por favor, verifica tu correo y contraseña.");
+            break;
+          case 500:
+            setMensaje("Error interno del servidor. Inténtalo más tarde.");
+            break;
+          default:
+            setMensaje("Error al iniciar sesión. Por favor, inténtalo de nuevo.");
+        }
+      } else if (error.request) {
+        setMensaje("No se pudo conectar con el servidor. Verifica tu conexión.");
       } else {
-        setMensaje("Ocurrió un error al intentar iniciar sesión. Inténtalo más tarde.");
+        setMensaje("Ocurrió un error inesperado. Inténtalo más tarde.");
       }
     } finally {
       setIsLoading(false);
@@ -71,7 +101,7 @@ function Login() {
   };
 
   const getMensajeClass = () => {
-    if (mensaje.includes("inválidas") || mensaje.includes("error") || mensaje.includes("Ocurrió")) {
+    if (mensaje.includes("inválidas") || mensaje.includes("error") || mensaje.includes("Error") || mensaje.includes("No se pudo")) {
       return "login-message error";
     }
     if (mensaje.includes("exitoso")) {
@@ -79,6 +109,19 @@ function Login() {
     }
     return "login-message loading";
   };
+
+  // Mostrar loading mientras se verifica la sesión
+  if (loading) {
+    return (
+      <div className="login-container">
+        <div className="login-box">
+          <div className="loading-spinner">
+            <p>Verificando sesión...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container">
