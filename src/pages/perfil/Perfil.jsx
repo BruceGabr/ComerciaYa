@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { scrollToTop } from "../../components/scrollToTop/ScrollToTop";
 import "./Perfil.css";
 
 function Perfil() {
-  const { user, getUserProfile, updateUserProfile, loading: authLoading, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const { user, getUserProfile, updateUserProfile } = useAuth();
   
   const [profileData, setProfileData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -24,65 +22,36 @@ function Perfil() {
     numeroTelefonico: ""
   });
 
-  // Cargar datos del perfil cuando la autenticación esté completa
+  // Cargar datos del perfil al montar el componente
   useEffect(() => {
-    scrollToTop();
-    
-    // Esperar a que termine la verificación de autenticación
-    if (authLoading) {
-      console.log("AuthContext aún cargando...");
-      return;
-    }
-    
-    // Si no está autenticado, redirigir al login
-    if (!isAuthenticated || !user) {
-      console.log("Usuario no autenticado, redirigiendo al login");
-      navigate("/login");
-      return;
-    }
-    
-    // Si está autenticado, cargar el perfil
-    console.log("Usuario autenticado, cargando perfil para:", user.correo);
     loadProfile();
-  }, [authLoading, isAuthenticated, user, navigate]);
+    scrollToTop();
+  }, []);
 
   const loadProfile = async () => {
     try {
       setLoading(true);
       setError("");
       
-      console.log("Iniciando carga de perfil...");
       const profile = await getUserProfile();
       setProfileData(profile);
       
-      // Preparar datos para edición - corregir el formato de fecha
-      const formattedBirthDate = profile.fechaNacimiento ? 
-        formatDateForInput(profile.fechaNacimiento) : "";
-      
+      // Preparar datos para edición
       setEditData({
         nombre: profile.nombre || "",
         apellido: profile.apellido || "",
-        fechaNacimiento: formattedBirthDate,
+        fechaNacimiento: profile.fechaNacimiento ? profile.fechaNacimiento.split('T')[0] : "",
         genero: profile.genero || "",
         numeroTelefonico: profile.numeroTelefonico || ""
       });
       
-      console.log("Perfil cargado exitosamente:", profile);
+      console.log("Perfil cargado:", profile);
     } catch (err) {
       console.error("Error cargando perfil:", err);
       setError("Error al cargar el perfil. Por favor, inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
-  };
-
-  // Función para formatear fecha para el input (YYYY-MM-DD)
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return "";
-    
-    // Extraer solo la parte de la fecha (YYYY-MM-DD)
-    const datePart = dateString.split('T')[0];
-    return datePart;
   };
 
   const handleInputChange = (e) => {
@@ -105,13 +74,10 @@ function Perfil() {
     setSuccessMessage("");
     
     // Restaurar datos originales
-    const formattedBirthDate = profileData.fechaNacimiento ? 
-      formatDateForInput(profileData.fechaNacimiento) : "";
-    
     setEditData({
       nombre: profileData.nombre || "",
       apellido: profileData.apellido || "",
-      fechaNacimiento: formattedBirthDate,
+      fechaNacimiento: profileData.fechaNacimiento ? profileData.fechaNacimiento.split('T')[0] : "",
       genero: profileData.genero || "",
       numeroTelefonico: profileData.numeroTelefonico || ""
     });
@@ -130,19 +96,13 @@ function Perfil() {
         return;
       }
 
-      // Validar edad mínima usando componentes de fecha
-      const [year, month, day] = editData.fechaNacimiento.split('-');
-      const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      // Validar edad mínima
+      const birthDate = new Date(editData.fechaNacimiento);
       const today = new Date();
-      
-      let age = today.getFullYear() - birthDate.getFullYear();
+      const age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
       
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      
-      if (age < 17) {
+      if (age < 17 || (age === 17 && monthDiff < 0)) {
         setError("Debes tener al menos 17 años.");
         return;
       }
@@ -162,17 +122,10 @@ function Perfil() {
     }
   };
 
-  // Función corregida para formatear fechas para mostrar
   const formatDate = (dateString) => {
     if (!dateString) return "No especificado";
     
-    // Extraer solo la parte de la fecha (YYYY-MM-DD)
-    const datePart = dateString.split('T')[0];
-    const [year, month, day] = datePart.split('-');
-    
-    // Crear fecha usando los componentes individuales
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    
+    const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
@@ -180,16 +133,11 @@ function Perfil() {
     });
   };
 
-  // Función corregida para calcular edad
   const calculateAge = (birthDate) => {
     if (!birthDate) return "No especificado";
     
     const today = new Date();
-    // Usar la misma lógica para evitar problemas de zona horaria
-    const datePart = birthDate.split('T')[0];
-    const [year, month, day] = datePart.split('-');
-    const birth = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    
+    const birth = new Date(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     
@@ -200,34 +148,6 @@ function Perfil() {
     return `${age} años`;
   };
 
-  // Mostrar loading mientras se verifica la autenticación
-  if (authLoading) {
-    return (
-      <div className="perfil-container">
-        <div className="perfil-loading">
-          <div className="loading-spinner"></div>
-          <p>Verificando sesión...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Si no está autenticado, mostrar mensaje (aunque debería redirigir)
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="perfil-container">
-        <div className="perfil-error">
-          <h3>Acceso denegado</h3>
-          <p>Debes iniciar sesión para acceder a tu perfil.</p>
-          <button onClick={() => navigate("/login")} className="btn-retry">
-            Ir al Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Mostrar loading mientras se carga el perfil
   if (loading) {
     return (
       <div className="perfil-container">
@@ -239,28 +159,12 @@ function Perfil() {
     );
   }
 
-  // Si hay error cargando el perfil
-  if (!profileData && error) {
-    return (
-      <div className="perfil-container">
-        <div className="perfil-error">
-          <h3>Error al cargar el perfil</h3>
-          <p>{error}</p>
-          <button onClick={loadProfile} className="btn-retry">
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Si no hay datos del perfil por alguna razón
   if (!profileData) {
     return (
       <div className="perfil-container">
         <div className="perfil-error">
-          <h3>No se encontraron datos del perfil</h3>
-          <p>No se pudieron cargar los datos de tu perfil.</p>
+          <h3>Error al cargar el perfil</h3>
+          <p>{error || "No se pudo cargar la información del usuario."}</p>
           <button onClick={loadProfile} className="btn-retry">
             Reintentar
           </button>

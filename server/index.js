@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken'; // NUEVO: Importar JWT
+import jwt from 'jsonwebtoken';
 import connectDB from './../src/db/connection.js';
-import { Registro, Usuario } from './../src/db/models.js';
+import { Registro, Usuario, Emprendimiento, Producto, Valoracion, CATEGORIAS_EMPRENDIMIENTOS } from './../src/db/models.js';
 import bcrypt from 'bcryptjs';
 
 dotenv.config();
@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// NUEVO: Verificar que JWT_SECRET existe
+// Verificar que JWT_SECRET existe
 if (!process.env.JWT_SECRET) {
   console.error('ERROR: JWT_SECRET no está definido en las variables de entorno');
   process.exit(1);
@@ -24,7 +24,7 @@ app.use(express.json());
 // Conectar a la base de datos
 connectDB();
 
-// NUEVO: Middleware para verificar JWT
+// Middleware para verificar JWT
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
@@ -32,7 +32,7 @@ const verifyToken = (req, res, next) => {
     return res.status(401).json({ message: 'Token de acceso requerido' });
   }
   
-  const token = authHeader.split(' ')[1]; // Formato: "Bearer TOKEN"
+  const token = authHeader.split(' ')[1];
   
   if (!token) {
     return res.status(401).json({ message: 'Formato de token inválido' });
@@ -40,7 +40,7 @@ const verifyToken = (req, res, next) => {
   
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Agregar datos del usuario al request
+    req.user = decoded;
     next();
   } catch (error) {
     console.error('Error verificando token:', error.message);
@@ -55,7 +55,17 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// Ruta de Registro (sin cambios significativos)
+// Función helper para normalizar texto (sin tildes, minúsculas)
+const normalizeText = (text) => {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Remover tildes
+};
+
+// ==================== RUTAS DE AUTENTICACIÓN ====================
+
+// Ruta de Registro
 app.post('/api/register', async (req, res) => {
   try {
     console.log('--- Petición de registro recibida ---');
@@ -63,18 +73,18 @@ app.post('/api/register', async (req, res) => {
 
     const { nombre, apellido, fechaNacimiento, genero, contacto, correo, contrasena } = req.body;
 
-    // 1. Validar si el usuario ya existe
+    // Validar si el usuario ya existe
     const existingUser = await Usuario.findOne({ correo });
     if (existingUser) {
       console.log('Intento de registro con correo existente (409):', correo);
       return res.status(409).json({ message: 'El correo ya está registrado.' });
     }
 
-    // 2. Hashear la contraseña
+    // Hashear la contraseña
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(contrasena, salt);
 
-    // 3. Crear el nuevo registro en la colección Registro
+    // Crear el nuevo registro
     const newRegistro = new Registro({
       nombre,
       apellido,
@@ -86,23 +96,23 @@ app.post('/api/register', async (req, res) => {
     });
     await newRegistro.save();
 
-    // 4. Crear el nuevo usuario en la colección Usuario
+    // Crear el nuevo usuario
     const newUsuario = new Usuario({
       correo,
       contrasena: hashedPassword,
     });
     await newUsuario.save();
 
-    console.log('!!! Usuario y Registro guardados con éxito para:', correo);
+    console.log('Usuario y Registro guardados con éxito para:', correo);
     res.status(201).json({ message: 'Usuario registrado con éxito.', userId: newUsuario._id });
 
   } catch (error) {
-    console.error('*** Error al registrar usuario en backend:', error);
+    console.error('Error al registrar usuario:', error);
     res.status(500).json({ message: 'Error interno del servidor al registrar usuario.', error: error.message });
   }
 });
 
-// MODIFICADO: Ruta de Login con JWT
+// Ruta de Login
 app.post('/api/login', async (req, res) => {
   try {
     console.log('--- Petición de login recibida ---');
@@ -110,33 +120,29 @@ app.post('/api/login', async (req, res) => {
 
     const { correo, contraseña } = req.body;
 
-    // 1. Buscar el usuario por correo
     const user = await Usuario.findOne({ correo });
     if (!user) {
       console.log('Fallo de login: Usuario no encontrado para correo:', correo);
       return res.status(400).json({ message: 'Credenciales inválidas.' });
     }
 
-    // 2. Comparar la contraseña proporcionada con la hasheada en la BD
     const isMatch = await bcrypt.compare(contraseña, user.contrasena);
     if (!isMatch) {
       console.log('Fallo de login: Contraseña incorrecta para correo:', correo);
       return res.status(400).json({ message: 'Credenciales inválidas.' });
     }
 
-    // NUEVO: 3. Generar JWT
     const token = jwt.sign(
       { 
         userId: user._id.toString(),
         correo: user.correo 
       },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' } // Token expira en 24 horas
+      { expiresIn: '24h' }
     );
 
-    console.log('!!! Inicio de sesión exitoso para usuario:', user.correo);
+    console.log('Inicio de sesión exitoso para usuario:', user.correo);
     
-    // MODIFICADO: Respuesta incluye JWT
     res.status(200).json({ 
       message: 'Inicio de sesión exitoso.',
       token: token,
@@ -147,17 +153,18 @@ app.post('/api/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('*** Error al iniciar sesión en backend:', error);
+    console.error('Error al iniciar sesión:', error);
     res.status(500).json({ message: 'Error interno del servidor al iniciar sesión.', error: error.message });
   }
 });
 
-// NUEVO: Ruta para verificar si un usuario existe (para verificar sesión)
+// ==================== RUTAS DE USUARIO ====================
+
+// Verificar usuario
 app.get('/api/user/verify/:userId', verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Verificar que el userId del token coincide con el solicitado
     if (req.user.userId !== userId) {
       return res.status(403).json({ message: 'No autorizado para acceder a este usuario' });
     }
@@ -178,24 +185,21 @@ app.get('/api/user/verify/:userId', verifyToken, async (req, res) => {
   }
 });
 
-// NUEVO: Ruta para obtener perfil completo del usuario
+// Obtener perfil del usuario
 app.get('/api/user/profile/:userId', verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Verificar que el userId del token coincide con el solicitado
     if (req.user.userId !== userId) {
       return res.status(403).json({ message: 'No autorizado para acceder a este perfil' });
     }
     
-    // Buscar datos completos en la colección Registro
     const userProfile = await Registro.findOne({ correo: req.user.correo });
     
     if (!userProfile) {
       return res.status(404).json({ message: 'Perfil de usuario no encontrado' });
     }
     
-    // Devolver datos sin la contraseña
     const profileData = {
       id: userProfile._id,
       nombre: userProfile.nombre,
@@ -217,19 +221,17 @@ app.get('/api/user/profile/:userId', verifyToken, async (req, res) => {
   }
 });
 
-// NUEVO: Ruta para actualizar perfil del usuario
+// Actualizar perfil del usuario
 app.put('/api/user/profile/:userId', verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Verificar que el userId del token coincide con el solicitado
     if (req.user.userId !== userId) {
       return res.status(403).json({ message: 'No autorizado para modificar este perfil' });
     }
     
     const { nombre, apellido, fechaNacimiento, genero, numeroTelefonico } = req.body;
     
-    // Actualizar datos en la colección Registro
     const updatedProfile = await Registro.findOneAndUpdate(
       { correo: req.user.correo },
       {
@@ -239,14 +241,13 @@ app.put('/api/user/profile/:userId', verifyToken, async (req, res) => {
         genero,
         numeroTelefonico
       },
-      { new: true } // Devolver el documento actualizado
+      { new: true }
     );
     
     if (!updatedProfile) {
       return res.status(404).json({ message: 'Perfil de usuario no encontrado' });
     }
     
-    // Devolver datos actualizados sin la contraseña
     const profileData = {
       id: updatedProfile._id,
       nombre: updatedProfile.nombre,
@@ -264,6 +265,515 @@ app.put('/api/user/profile/:userId', verifyToken, async (req, res) => {
     
   } catch (error) {
     console.error('Error actualizando perfil:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// ==================== RUTAS DE EMPRENDIMIENTOS ====================
+
+// Obtener categorías disponibles
+app.get('/api/emprendimientos/categorias', (req, res) => {
+  res.status(200).json(CATEGORIAS_EMPRENDIMIENTOS);
+});
+
+// Crear emprendimiento
+app.post('/api/emprendimientos', verifyToken, async (req, res) => {
+  try {
+    const { nombreEmprendimiento, descripcion, categoriaEmprendimiento } = req.body;
+    
+    // Validar que la categoría existe
+    if (!CATEGORIAS_EMPRENDIMIENTOS.includes(categoriaEmprendimiento)) {
+      return res.status(400).json({ message: 'Categoría no válida' });
+    }
+    
+    // Obtener el usuario completo
+    const usuario = await Usuario.findById(req.user.userId);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    const nuevoEmprendimiento = new Emprendimiento({
+      nombreEmprendimiento,
+      descripcion,
+      categoriaEmprendimiento,
+      usuario: usuario._id
+    });
+    
+    await nuevoEmprendimiento.save();
+    
+    // Poblar con datos del usuario para la respuesta
+    await nuevoEmprendimiento.populate('usuario', 'correo');
+    
+    console.log('Emprendimiento creado:', nombreEmprendimiento, 'por:', req.user.correo);
+    res.status(201).json({
+      message: 'Emprendimiento creado exitosamente',
+      emprendimiento: nuevoEmprendimiento
+    });
+    
+  } catch (error) {
+    console.error('Error creando emprendimiento:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Obtener emprendimientos del usuario autenticado
+app.get('/api/emprendimientos/mis-emprendimientos', verifyToken, async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.user.userId);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    const emprendimientos = await Emprendimiento.find({ 
+      usuario: usuario._id, 
+      activo: true 
+    })
+    .populate('usuario', 'correo')
+    .sort({ createdAt: -1 });
+    
+    res.status(200).json(emprendimientos);
+    
+  } catch (error) {
+    console.error('Error obteniendo emprendimientos del usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Obtener todos los emprendimientos (para explorar)
+app.get('/api/emprendimientos', async (req, res) => {
+  try {
+    const { busqueda, categoria, orden = 'popularidad' } = req.query;
+    
+    let filtros = { activo: true };
+    
+    // Filtro por categoría
+    if (categoria && categoria !== 'todas') {
+      filtros.categoriaEmprendimiento = categoria;
+    }
+    
+    // Filtro por búsqueda (nombre)
+    if (busqueda) {
+      const busquedaNormalizada = normalizeText(busqueda);
+      filtros.$or = [
+        { nombreEmprendimiento: { $regex: busquedaNormalizada, $options: 'i' } }
+      ];
+    }
+    
+    // Configurar ordenamiento
+    let ordenamiento = {};
+    switch (orden) {
+      case 'popularidad':
+        ordenamiento = { totalValoraciones: -1, promedioValoraciones: -1 };
+        break;
+      case 'recientes':
+        ordenamiento = { createdAt: -1 };
+        break;
+      case 'alfabetico':
+        ordenamiento = { nombreEmprendimiento: 1 };
+        break;
+      case 'mejor_valorados':
+        ordenamiento = { promedioValoraciones: -1, totalValoraciones: -1 };
+        break;
+      default:
+        ordenamiento = { totalValoraciones: -1, promedioValoraciones: -1 };
+    }
+    
+    const emprendimientos = await Emprendimiento.find(filtros)
+      .populate('usuario', 'correo')
+      .sort(ordenamiento)
+      .lean();
+    
+    res.status(200).json(emprendimientos);
+    
+  } catch (error) {
+    console.error('Error obteniendo emprendimientos:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Obtener emprendimiento por ID
+app.get('/api/emprendimientos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const emprendimiento = await Emprendimiento.findOne({ _id: id, activo: true })
+      .populate('usuario', 'correo');
+    
+    if (!emprendimiento) {
+      return res.status(404).json({ message: 'Emprendimiento no encontrado' });
+    }
+    
+    res.status(200).json(emprendimiento);
+    
+  } catch (error) {
+    console.error('Error obteniendo emprendimiento:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Actualizar emprendimiento
+app.put('/api/emprendimientos/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombreEmprendimiento, descripcion, categoriaEmprendimiento } = req.body;
+    
+    // Validar que la categoría existe
+    if (!CATEGORIAS_EMPRENDIMIENTOS.includes(categoriaEmprendimiento)) {
+      return res.status(400).json({ message: 'Categoría no válida' });
+    }
+    
+    const usuario = await Usuario.findById(req.user.userId);
+    
+    const emprendimiento = await Emprendimiento.findOneAndUpdate(
+      { _id: id, usuario: usuario._id, activo: true },
+      { nombreEmprendimiento, descripcion, categoriaEmprendimiento },
+      { new: true }
+    ).populate('usuario', 'correo');
+    
+    if (!emprendimiento) {
+      return res.status(404).json({ message: 'Emprendimiento no encontrado o no autorizado' });
+    }
+    
+    console.log('Emprendimiento actualizado:', id, 'por:', req.user.correo);
+    res.status(200).json({
+      message: 'Emprendimiento actualizado exitosamente',
+      emprendimiento
+    });
+    
+  } catch (error) {
+    console.error('Error actualizando emprendimiento:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Eliminar emprendimiento (soft delete)
+app.delete('/api/emprendimientos/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const usuario = await Usuario.findById(req.user.userId);
+    
+    const emprendimiento = await Emprendimiento.findOneAndUpdate(
+      { _id: id, usuario: usuario._id, activo: true },
+      { activo: false },
+      { new: true }
+    );
+    
+    if (!emprendimiento) {
+      return res.status(404).json({ message: 'Emprendimiento no encontrado o no autorizado' });
+    }
+    
+    // También desactivar productos asociados
+    await Producto.updateMany(
+      { emprendimiento: id },
+      { activo: false }
+    );
+    
+    console.log('Emprendimiento eliminado:', id, 'por:', req.user.correo);
+    res.status(200).json({ message: 'Emprendimiento eliminado exitosamente' });
+    
+  } catch (error) {
+    console.error('Error eliminando emprendimiento:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// ==================== RUTAS DE PRODUCTOS/SERVICIOS ====================
+
+// Crear producto/servicio
+app.post('/api/productos', verifyToken, async (req, res) => {
+  try {
+    const { nombreProducto, descripcion, tipo, emprendimientoId } = req.body;
+    
+    // Validar que el tipo es válido
+    if (!['producto', 'servicio'].includes(tipo)) {
+      return res.status(400).json({ message: 'Tipo debe ser "producto" o "servicio"' });
+    }
+    
+    // Verificar que el emprendimiento existe y pertenece al usuario
+    const usuario = await Usuario.findById(req.user.userId);
+    const emprendimiento = await Emprendimiento.findOne({ 
+      _id: emprendimientoId, 
+      usuario: usuario._id, 
+      activo: true 
+    });
+    
+    if (!emprendimiento) {
+      return res.status(404).json({ message: 'Emprendimiento no encontrado o no autorizado' });
+    }
+    
+    const nuevoProducto = new Producto({
+      nombreProducto,
+      descripcion,
+      tipo,
+      emprendimiento
+    });
+    
+    await nuevoProducto.save();
+    await nuevoProducto.populate('emprendimiento', 'nombreEmprendimiento');
+    
+    console.log('Producto/servicio creado:', nombreProducto, 'por:', req.user.correo);
+    res.status(201).json({
+      message: 'Producto/servicio creado exitosamente',
+      producto: nuevoProducto
+    });
+    
+  } catch (error) {
+    console.error('Error creando producto:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Obtener productos/servicios de un emprendimiento
+app.get('/api/productos/emprendimiento/:emprendimientoId', async (req, res) => {
+  try {
+    const { emprendimientoId } = req.params;
+    
+    const productos = await Producto.find({ 
+      emprendimiento: emprendimientoId, 
+      activo: true 
+    })
+    .populate('emprendimiento', 'nombreEmprendimiento')
+    .sort({ createdAt: -1 });
+    
+    res.status(200).json(productos);
+    
+  } catch (error) {
+    console.error('Error obteniendo productos:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Obtener productos/servicios del usuario autenticado
+app.get('/api/productos/mis-productos', verifyToken, async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.user.userId);
+    
+    // Primero obtener los emprendimientos del usuario
+    const emprendimientos = await Emprendimiento.find({ 
+      usuario: usuario._id, 
+      activo: true 
+    }).select('_id');
+    
+    const emprendimientoIds = emprendimientos.map(emp => emp._id);
+    
+    const productos = await Producto.find({ 
+      emprendimiento: { $in: emprendimientoIds }, 
+      activo: true 
+    })
+    .populate('emprendimiento', 'nombreEmprendimiento')
+    .sort({ createdAt: -1 });
+    
+    res.status(200).json(productos);
+    
+  } catch (error) {
+    console.error('Error obteniendo productos del usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Actualizar producto/servicio
+app.put('/api/productos/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombreProducto, descripcion, tipo } = req.body;
+    
+    // Validar que el tipo es válido
+    if (!['producto', 'servicio'].includes(tipo)) {
+      return res.status(400).json({ message: 'Tipo debe ser "producto" o "servicio"' });
+    }
+    
+    const usuario = await Usuario.findById(req.user.userId);
+    
+    // Verificar que el producto pertenece a un emprendimiento del usuario
+    const producto = await Producto.findOne({ _id: id, activo: true })
+      .populate('emprendimiento');
+    
+    if (!producto || producto.emprendimiento.usuario.toString() !== usuario._id.toString()) {
+      return res.status(404).json({ message: 'Producto no encontrado o no autorizado' });
+    }
+    
+    producto.nombreProducto = nombreProducto;
+    producto.descripcion = descripcion;
+    producto.tipo = tipo;
+    
+    await producto.save();
+    await producto.populate('emprendimiento', 'nombreEmprendimiento');
+    
+    console.log('Producto actualizado:', id, 'por:', req.user.correo);
+    res.status(200).json({
+      message: 'Producto/servicio actualizado exitosamente',
+      producto
+    });
+    
+  } catch (error) {
+    console.error('Error actualizando producto:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Eliminar producto/servicio (soft delete)
+app.delete('/api/productos/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const usuario = await Usuario.findById(req.user.userId);
+    
+    // Verificar que el producto pertenece a un emprendimiento del usuario
+    const producto = await Producto.findOne({ _id: id, activo: true })
+      .populate('emprendimiento');
+    
+    if (!producto || producto.emprendimiento.usuario.toString() !== usuario._id.toString()) {
+      return res.status(404).json({ message: 'Producto no encontrado o no autorizado' });
+    }
+    
+    producto.activo = false;
+    await producto.save();
+    
+    console.log('Producto eliminado:', id, 'por:', req.user.correo);
+    res.status(200).json({ message: 'Producto/servicio eliminado exitosamente' });
+    
+  } catch (error) {
+    console.error('Error eliminando producto:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// ==================== RUTAS DE VALORACIONES ====================
+
+// Crear valoración
+app.post('/api/valoraciones', verifyToken, async (req, res) => {
+  try {
+    const { emprendimientoId, puntuacion, comentario } = req.body;
+    
+    // Validar puntuación
+    if (puntuacion < 1 || puntuacion > 5) {
+      return res.status(400).json({ message: 'La puntuación debe estar entre 1 y 5' });
+    }
+    
+    // Verificar que el emprendimiento existe
+    const emprendimiento = await Emprendimiento.findOne({ _id: emprendimientoId, activo: true });
+    if (!emprendimiento) {
+      return res.status(404).json({ message: 'Emprendimiento no encontrado' });
+    }
+    
+    // Verificar que el usuario no sea el dueño del emprendimiento
+    const usuario = await Usuario.findById(req.user.userId);
+    if (emprendimiento.usuario.toString() === usuario._id.toString()) {
+      return res.status(403).json({ message: 'No puedes valorar tu propio emprendimiento' });
+    }
+    
+    // Verificar si ya existe una valoración del usuario para este emprendimiento
+    const valoracionExistente = await Valoracion.findOne({
+      emprendimiento: emprendimientoId,
+      usuario: usuario._id
+    });
+    
+    if (valoracionExistente) {
+      return res.status(409).json({ message: 'Ya has valorado este emprendimiento' });
+    }
+    
+    const nuevaValoracion = new Valoracion({
+      emprendimiento: emprendimientoId,
+      usuario: usuario._id,
+      puntuacion,
+      comentario
+    });
+    
+    await nuevaValoracion.save();
+    await nuevaValoracion.populate([
+      { path: 'usuario', select: 'correo' },
+      { path: 'emprendimiento', select: 'nombreEmprendimiento' }
+    ]);
+    
+    console.log('Valoración creada para emprendimiento:', emprendimientoId, 'por:', req.user.correo);
+    res.status(201).json({
+      message: 'Valoración creada exitosamente',
+      valoracion: nuevaValoracion
+    });
+    
+  } catch (error) {
+    console.error('Error creando valoración:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Obtener valoraciones de un emprendimiento
+app.get('/api/valoraciones/emprendimiento/:emprendimientoId', async (req, res) => {
+  try {
+    const { emprendimientoId } = req.params;
+    
+    const valoraciones = await Valoracion.find({ emprendimiento: emprendimientoId })
+      .populate('usuario', 'correo')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json(valoraciones);
+    
+  } catch (error) {
+    console.error('Error obteniendo valoraciones:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Actualizar valoración
+app.put('/api/valoraciones/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { puntuacion, comentario } = req.body;
+    
+    // Validar puntuación
+    if (puntuacion < 1 || puntuacion > 5) {
+      return res.status(400).json({ message: 'La puntuación debe estar entre 1 y 5' });
+    }
+    
+    const usuario = await Usuario.findById(req.user.userId);
+    
+    const valoracion = await Valoracion.findOneAndUpdate(
+      { _id: id, usuario: usuario._id },
+      { puntuacion, comentario },
+      { new: true }
+    ).populate([
+      { path: 'usuario', select: 'correo' },
+      { path: 'emprendimiento', select: 'nombreEmprendimiento' }
+    ]);
+    
+    if (!valoracion) {
+      return res.status(404).json({ message: 'Valoración no encontrada o no autorizada' });
+    }
+    
+    console.log('Valoración actualizada:', id, 'por:', req.user.correo);
+    res.status(200).json({
+      message: 'Valoración actualizada exitosamente',
+      valoracion
+    });
+    
+  } catch (error) {
+    console.error('Error actualizando valoración:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Eliminar valoración
+app.delete('/api/valoraciones/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const usuario = await Usuario.findById(req.user.userId);
+    
+    const valoracion = await Valoracion.findOneAndDelete({
+      _id: id,
+      usuario: usuario._id
+    });
+    
+    if (!valoracion) {
+      return res.status(404).json({ message: 'Valoración no encontrada o no autorizada' });
+    }
+    
+    console.log('Valoración eliminada:', id, 'por:', req.user.correo);
+    res.status(200).json({ message: 'Valoración eliminada exitosamente' });
+    
+  } catch (error) {
+    console.error('Error eliminando valoración:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 });

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Header, Sidebar, Footer, ScrollToTop } from './components';
-import { Home, Explorar, Registro, Login, Perfil, Dashboard, NuevoEmprendimiento, Reseñas } from "./pages";
+import { Home, Explorar, Registro, Login, Perfil, Dashboard} from "./pages";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
 
@@ -91,22 +91,6 @@ function AppContent() {
                 element={
                   <PrivateRoute>
                     <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/reseñas"
-                element={
-                  <PrivateRoute>
-                    <Reseñas />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/nuevoEmprendimiento"
-                element={
-                  <PrivateRoute>
-                    <NuevoEmprendimiento />
                   </PrivateRoute>
                 }
               />

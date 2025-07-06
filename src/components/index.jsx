@@ -4,3 +4,4 @@ export { default as Footer } from './footer/Footer';
 export { default as EmprendimientoCard } from './emprendimientoCard/EmprendimientoCard';
 export { default as Sidebar } from './sidebar/Sidebar';
 export { default as ScrollToTop } from './scrollToTop/ScrollToTop';
+export { default as Modal } from './UI/Modal/Modal'
