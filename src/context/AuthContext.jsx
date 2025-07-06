@@ -15,38 +15,41 @@ export const AuthProvider = ({ children }) => {
   // Función para verificar token almacenado al iniciar la app
   useEffect(() => {
     const checkStoredAuth = async () => {
+      const storedToken = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('authUser');
+
+      if (!storedToken || !storedUser) {
+        console.log("AuthContext: No hay sesión almacenada");
+        setLoading(false); // 👈 necesaria
+        return;
+      }
+
       try {
-        const storedToken = localStorage.getItem('authToken');
-        const storedUser = localStorage.getItem('authUser');
-        
-        if (storedToken && storedUser) {
-          // Verificar que el token sigue siendo válido
-          const parsedUser = JSON.parse(storedUser);
-          const isValid = await verifyToken(storedToken, parsedUser.id);
-          
-          if (isValid) {
-            setToken(storedToken);
-            setUser(parsedUser);
-            setIsAuthenticated(true);
-            console.log("AuthContext: Sesión restaurada para:", parsedUser.correo);
-          } else {
-            // Token inválido, limpiar datos
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('authUser');
-            console.log("AuthContext: Token expirado o inválido, sesión limpiada");
-          }
+        const parsedUser = JSON.parse(storedUser);
+        const isValid = await verifyToken(storedToken, parsedUser.id);
+
+        if (isValid) {
+          setToken(storedToken);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          console.log("AuthContext: Sesión restaurada para:", parsedUser.correo);
+        } else {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authUser');
+          console.log("AuthContext: Token inválido o expirado");
         }
       } catch (error) {
-        console.error("Error verificando sesión almacenada:", error);
+        console.error("Error verificando sesión:", error);
         localStorage.removeItem('authToken');
         localStorage.removeItem('authUser');
       } finally {
-        setLoading(false);
+        setLoading(false); // ✅ siempre al final
       }
     };
 
     checkStoredAuth();
   }, []);
+
 
   // Función para verificar si un token es válido
   const verifyToken = async (token, userId) => {
@@ -69,11 +72,11 @@ export const AuthProvider = ({ children }) => {
       setToken(authToken);
       setUser(userData);
       setIsAuthenticated(true);
-      
+
       // Guardar en localStorage
       localStorage.setItem('authToken', authToken);
       localStorage.setItem('authUser', JSON.stringify(userData));
-      
+
       console.log("AuthContext: Usuario autenticado:", userData.correo);
     } catch (error) {
       console.error("Error en login:", error);
@@ -85,11 +88,11 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     setUser(null);
     setToken(null);
-    
+
     // Limpiar localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('authUser');
-    
+
     console.log("AuthContext: Usuario deslogueado");
     navigate("/login");
   };
@@ -109,12 +112,12 @@ export const AuthProvider = ({ children }) => {
       return response.data;
     } catch (error) {
       console.error("Error obteniendo perfil:", error);
-      
+
       // Si el token expiró, hacer logout
       if (error.response?.status === 401) {
         logout();
       }
-      
+
       throw error;
     }
   };
@@ -134,12 +137,12 @@ export const AuthProvider = ({ children }) => {
       return response.data;
     } catch (error) {
       console.error("Error actualizando perfil:", error);
-      
+
       // Si el token expiró, hacer logout
       if (error.response?.status === 401) {
         logout();
       }
-      
+
       throw error;
     }
   };

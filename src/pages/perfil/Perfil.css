@@ -16,7 +16,7 @@
   color: #2c3e50;
   font-size: 2.5rem;
   margin-bottom: 10px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .perfil-header p {
@@ -225,36 +225,6 @@
   background: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
-}
-
-/* Estados de carga */
-.perfil-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: #7f8c8d;
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #ecf0f1;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.perfil-loading p {
-  font-size: 1.1rem;
-  margin: 0;
 }
 
 /* Error state */

@@ -1,17 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { scrollToTop } from "../../components/scrollToTop/ScrollToTop";
+import { usePageReady } from "../../context/PageReadyContext";
 import "./Perfil.css";
 
 function Perfil() {
-  const { user, getUserProfile, updateUserProfile } = useAuth();
-  
+  const { user, getUserProfile, updateUserProfile, loading: authLoading, logout } = useAuth();
+  const { finishLoading, resetPageState } = usePageReady();
+
   const [profileData, setProfileData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  const fetchingRef = useRef(false);
+  const hasNotifiedReady = useRef(false);
 
   // Datos del formulario de edición
   const [editData, setEditData] = useState({
@@ -22,20 +27,32 @@ function Perfil() {
     numeroTelefonico: ""
   });
 
-  // Cargar datos del perfil al montar el componente
-  useEffect(() => {
-    loadProfile();
-    scrollToTop();
-  }, []);
+  const loadProfile = useCallback(async () => {
+    if (fetchingRef.current) {
+      console.log('⏭️ Perfil: Fetch ya en progreso, saltando');
+      return;
+    }
 
-  const loadProfile = async () => {
+    if (authLoading) {
+      console.log('⏳ Perfil: Auth cargando, esperando...');
+      return;
+    }
+
+    console.log('📡 Perfil: Iniciando fetch de perfil');
+
     try {
-      setLoading(true);
+      fetchingRef.current = true;
       setError("");
-      
+
       const profile = await getUserProfile();
-      setProfileData(profile);
       
+      if (!profile) {
+        throw new Error("No se pudo obtener el perfil del usuario");
+      }
+
+      console.log('✅ Perfil: Datos obtenidos:', profile);
+      setProfileData(profile);
+
       // Preparar datos para edición
       setEditData({
         nombre: profile.nombre || "",
@@ -44,15 +61,72 @@ function Perfil() {
         genero: profile.genero || "",
         numeroTelefonico: profile.numeroTelefonico || ""
       });
-      
-      console.log("Perfil cargado:", profile);
+
+      setDataLoaded(true);
+
     } catch (err) {
-      console.error("Error cargando perfil:", err);
+      console.error("❌ Perfil: Error cargando perfil:", err);
       setError("Error al cargar el perfil. Por favor, inténtalo de nuevo.");
+      setDataLoaded(true); // Marcar como completado aunque haya error
     } finally {
-      setLoading(false);
+      fetchingRef.current = false;
     }
-  };
+  }, [getUserProfile, authLoading]);
+
+  // ✅ Efecto principal - esperar a que auth esté listo y luego cargar datos
+  useEffect(() => {
+    console.log('🚀 Perfil: Efecto principal', {
+      authLoading,
+      dataLoaded,
+      hasProfile: !!profileData
+    });
+
+    // Si auth está cargando, no hacer nada
+    if (authLoading) {
+      console.log('⏳ Perfil: Auth cargando, esperando...');
+      return;
+    }
+
+    // Si no hay datos cargados y no está fetching, cargar
+    if (!dataLoaded && !fetchingRef.current) {
+      console.log('📊 Perfil: Cargando datos del perfil');
+      loadProfile();
+      scrollToTop();
+    }
+  }, [authLoading, dataLoaded, loadProfile]);
+
+  // ✅ Efecto para notificar cuando esté listo
+  useEffect(() => {
+    const shouldNotify = !authLoading && dataLoaded && !hasNotifiedReady.current;
+
+    console.log('🔍 Perfil: Verificando si notificar', {
+      authLoading,
+      dataLoaded,
+      hasNotifiedReady: hasNotifiedReady.current,
+      shouldNotify
+    });
+
+    if (shouldNotify) {
+      console.log('✅ Perfil: Notificando que está listo');
+      hasNotifiedReady.current = true;
+
+      // Pequeño delay para asegurar que el render esté completo
+      setTimeout(() => {
+        finishLoading();
+      }, 500);
+    }
+  }, [authLoading, dataLoaded, finishLoading]);
+
+  // ✅ Efecto de limpieza al desmontar
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Perfil: Limpiando estado al desmontar');
+      resetPageState();
+      setDataLoaded(false);
+      hasNotifiedReady.current = false;
+      fetchingRef.current = false;
+    };
+  }, [resetPageState]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,7 +146,7 @@ function Perfil() {
     setIsEditing(false);
     setError("");
     setSuccessMessage("");
-    
+
     // Restaurar datos originales
     setEditData({
       nombre: profileData.nombre || "",
@@ -101,18 +175,18 @@ function Perfil() {
       const today = new Date();
       const age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
+
       if (age < 17 || (age === 17 && monthDiff < 0)) {
         setError("Debes tener al menos 17 años.");
         return;
       }
 
       const updatedProfile = await updateUserProfile(editData);
-      
+
       setProfileData(updatedProfile);
       setSuccessMessage("Perfil actualizado exitosamente.");
       setIsEditing(false);
-      
+
       console.log("Perfil actualizado:", updatedProfile);
     } catch (err) {
       console.error("Error actualizando perfil:", err);
@@ -122,9 +196,18 @@ function Perfil() {
     }
   };
 
+  const handleRetry = () => {
+    console.log('🔄 Perfil: Reintentando carga');
+    setDataLoaded(false);
+    setError('');
+    setProfileData(null);
+    hasNotifiedReady.current = false;
+    loadProfile();
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "No especificado";
-    
+
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -135,42 +218,45 @@ function Perfil() {
 
   const calculateAge = (birthDate) => {
     if (!birthDate) return "No especificado";
-    
+
     const today = new Date();
     const birth = new Date(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
-    
+
     return `${age} años`;
   };
 
-  if (loading) {
-    return (
-      <div className="perfil-container">
-        <div className="perfil-loading">
-          <div className="loading-spinner"></div>
-          <p>Cargando perfil...</p>
-        </div>
-      </div>
-    );
-  }
+  console.log('🎨 Perfil: Renderizando', {
+    authLoading,
+    dataLoaded,
+    hasProfile: !!profileData,
+    error: !!error
+  });
 
-  if (!profileData) {
+  // Mostrar error si hay uno y los datos están cargados
+  if (dataLoaded && error && !profileData) {
     return (
       <div className="perfil-container">
         <div className="perfil-error">
           <h3>Error al cargar el perfil</h3>
-          <p>{error || "No se pudo cargar la información del usuario."}</p>
-          <button onClick={loadProfile} className="btn-retry">
+          <p>{error}</p>
+          <button onClick={handleRetry} className="btn-retry">
             Reintentar
           </button>
         </div>
       </div>
     );
+  }
+
+  // Mostrar contenido solo cuando los datos estén cargados
+  if (!dataLoaded || !profileData) {
+    // El spinner principal se encarga de mostrar la carga
+    return null;
   }
 
   return (
@@ -283,27 +369,27 @@ function Perfil() {
                   <label>Nombre Completo</label>
                   <p>{profileData.nombre} {profileData.apellido}</p>
                 </div>
-                
+
                 <div className="info-item">
                   <label>Correo Electrónico</label>
                   <p>{profileData.correo}</p>
                 </div>
-                
+
                 <div className="info-item">
                   <label>Fecha de Nacimiento</label>
                   <p>{formatDate(profileData.fechaNacimiento)}</p>
                 </div>
-                
+
                 <div className="info-item">
                   <label>Edad</label>
                   <p>{calculateAge(profileData.fechaNacimiento)}</p>
                 </div>
-                
+
                 <div className="info-item">
                   <label>Género</label>
                   <p>{profileData.genero || "No especificado"}</p>
                 </div>
-                
+
                 <div className="info-item">
                   <label>Teléfono</label>
                   <p>{profileData.numeroTelefonico || "No especificado"}</p>
@@ -321,12 +407,12 @@ function Perfil() {
               <label>Fecha de Registro</label>
               <p>{formatDate(profileData.createdAt)}</p>
             </div>
-            
+
             <div className="info-item">
               <label>Última Actualización</label>
               <p>{formatDate(profileData.updatedAt)}</p>
             </div>
-            
+
             <div className="info-item">
               <label>ID de Usuario</label>
               <p className="user-id">{profileData.id}</p>
@@ -337,7 +423,13 @@ function Perfil() {
         {/* Mensajes */}
         {error && (
           <div className="message error">
-            {error}
+            <span className="error-icon">⚠️</span>
+            <span>{error}</span>
+            {error.includes('conexión') && (
+              <button className="retry-btn" onClick={handleRetry}>
+                Reintentar
+              </button>
+            )}
           </div>
         )}
 

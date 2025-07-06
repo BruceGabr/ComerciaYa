@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { EmprendimientoCard, Modal } from '../../components';
 import './Dashboard.css';
+import { usePageReady } from '../../context/PageReadyContext';
 
 const Dashboard = () => {
-  const { isAuthenticated, token, user, logout } = useAuth();
+  const { isAuthenticated, token, user, logout, loading: authLoading } = useAuth();
+  const { finishLoading, resetPageState } = usePageReady();
   const [emprendimientos, setEmprendimientos] = useState([]);
-  const [loading, setLoading] = useState(false); // Cambio: inicializar como false
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [nuevoEmprendimiento, setNuevoEmprendimiento] = useState({
@@ -16,71 +17,38 @@ const Dashboard = () => {
     categoria: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSpinner, setShowSpinner] = useState(false); // Nuevo estado para controlar el spinner
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const navigate = useNavigate();
   const fetchingRef = useRef(false);
-  const mountedRef = useRef(false);
-  const spinnerTimerRef = useRef(null); // Para controlar el timer del spinner
+  const hasNotifiedReady = useRef(false);
 
-  // Categorías predefinidas
   const categorias = [
-    'Ropa y Accesorios',
-    'Hogar y Decoración',
-    'Tecnología',
-    'Comidas y Bebidas',
-    'Artesanías',
-    'Servicios Profesionales',
-    'Educación y Capacitación',
-    'Salud y Bienestar',
-    'Belleza y Cuidado Personal',
-    'Entretenimiento y Eventos',
-    'Agricultura',
-    'Mascotas y Veterinaria',
-    'Turismo',
-    'Transporte y Logística',
-    'Deportes y Recreación',
-    'Construcción',
-    'Otro'
+    'Ropa y Accesorios', 'Hogar y Decoración', 'Tecnología',
+    'Comidas y Bebidas', 'Artesanías', 'Servicios Profesionales',
+    'Educación y Capacitación', 'Salud y Bienestar', 'Belleza y Cuidado Personal',
+    'Entretenimiento y Eventos', 'Agricultura', 'Mascotas y Veterinaria',
+    'Turismo', 'Transporte y Logística', 'Deportes y Recreación',
+    'Construcción', 'Otro'
   ];
 
-  // Función para manejar el spinner con delay
-  const handleLoadingState = useCallback((isLoading) => {
-    setLoading(isLoading);
-
-    if (isLoading) {
-      // Solo mostrar spinner si la carga toma más de 300ms
-      spinnerTimerRef.current = setTimeout(() => {
-        setShowSpinner(true);
-      }, 300);
-    } else {
-      // Limpiar timer y ocultar spinner
-      if (spinnerTimerRef.current) {
-        clearTimeout(spinnerTimerRef.current);
-        spinnerTimerRef.current = null;
-      }
-      setShowSpinner(false);
-    }
-  }, []);
-
-  // Optimizar fetchEmprendimientos
   const fetchEmprendimientos = useCallback(async () => {
     if (fetchingRef.current) {
+      console.log('⏭️ Dashboard: Fetch ya en progreso, saltando');
       return;
     }
 
     if (!isAuthenticated || !token) {
-      console.log('No authenticated or no token, logout');
+      console.log('❌ Dashboard: No autenticado para fetch');
       logout();
       return;
     }
 
+    console.log('📡 Dashboard: Iniciando fetch de emprendimientos');
+
     try {
       fetchingRef.current = true;
-      handleLoadingState(true); // Usar la nueva función
       setError('');
-
-      console.log('Fetching emprendimientos...');
 
       const response = await fetch('http://localhost:5000/api/emprendimientos/mis-emprendimientos', {
         headers: {
@@ -90,7 +58,7 @@ const Dashboard = () => {
       });
 
       if (response.status === 401) {
-        console.log('Token expired, logging out');
+        console.log('🔒 Dashboard: Token expirado');
         logout();
         return;
       }
@@ -100,49 +68,85 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      console.log('Emprendimientos fetched:', data);
-
+      console.log('✅ Dashboard: Emprendimientos obtenidos:', data.length);
       setEmprendimientos(Array.isArray(data) ? data : []);
+      setDataLoaded(true);
 
     } catch (err) {
-      console.error('Error fetching emprendimientos:', err);
+      console.error('❌ Dashboard: Error fetching emprendimientos:', err);
       setError(err.message || 'Error al cargar emprendimientos');
+      setDataLoaded(true); // Marcar como completado aunque haya error
     } finally {
       fetchingRef.current = false;
-      handleLoadingState(false); // Usar la nueva función
     }
-  }, [isAuthenticated, token, logout, handleLoadingState]);
+  }, [isAuthenticated, token, logout]);
 
-  // Cargar emprendimientos al montar el componente
+  // ✅ Efecto principal - esperar a que auth esté listo y luego cargar datos
   useEffect(() => {
-    if (!mountedRef.current) {
-      console.log('Dashboard mounted');
-      console.log('IsAuthenticated:', isAuthenticated);
-      console.log('Token exists:', !!token);
-      console.log('User:', user);
-      mountedRef.current = true;
+    console.log('🚀 Dashboard: Efecto principal', {
+      authLoading,
+      isAuthenticated,
+      hasToken: !!token,
+      dataLoaded
+    });
+
+    // Si auth está cargando, no hacer nada
+    if (authLoading) {
+      console.log('⏳ Dashboard: Auth cargando, esperando...');
+      return;
     }
 
-    if (isAuthenticated && token) {
+    // Si no está autenticado, redirigir
+    if (!isAuthenticated) {
+      console.log('❌ Dashboard: No autenticado, redirigiendo');
+      logout();
+      return;
+    }
+
+    // Si está autenticado pero no tiene datos, cargar
+    if (isAuthenticated && token && !dataLoaded && !fetchingRef.current) {
+      console.log('📊 Dashboard: Cargando datos');
       fetchEmprendimientos();
     }
-  }, [isAuthenticated, token, fetchEmprendimientos]);
+  }, [authLoading, isAuthenticated, token, dataLoaded, fetchEmprendimientos, logout]);
 
-  // Cleanup del timer al desmontar
+  // ✅ Efecto para notificar cuando esté listo
+  useEffect(() => {
+    const shouldNotify = !authLoading && isAuthenticated && dataLoaded && !hasNotifiedReady.current;
+
+    console.log('🔍 Dashboard: Verificando si notificar', {
+      authLoading,
+      isAuthenticated,
+      dataLoaded,
+      hasNotifiedReady: hasNotifiedReady.current,
+      shouldNotify
+    });
+
+    if (shouldNotify) {
+      console.log('✅ Dashboard: Notificando que está listo');
+      hasNotifiedReady.current = true;
+
+      // Pequeño delay para asegurar que el render esté completo
+      setTimeout(() => {
+        finishLoading();
+      }, 500);
+    }
+  }, [authLoading, isAuthenticated, dataLoaded, finishLoading]);
+
+  // ✅ Efecto de limpieza al desmontar
   useEffect(() => {
     return () => {
-      if (spinnerTimerRef.current) {
-        clearTimeout(spinnerTimerRef.current);
-      }
+      console.log('🧹 Dashboard: Limpiando estado al desmontar');
+      resetPageState();
+      setDataLoaded(false);
+      hasNotifiedReady.current = false;
+      fetchingRef.current = false;
     };
-  }, []);
+  }, [resetPageState]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNuevoEmprendimiento(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setNuevoEmprendimiento(prev => ({ ...prev, [name]: value }));
   };
 
   const handleCreateEmprendimiento = async (e) => {
@@ -200,13 +204,10 @@ const Dashboard = () => {
     }
   };
 
-
   const handleUpdateEmprendimiento = useCallback((emprendimientoActualizado) => {
     setEmprendimientos(prev =>
       prev.map(emp =>
-        emp._id === emprendimientoActualizado._id
-          ? emprendimientoActualizado
-          : emp
+        emp._id === emprendimientoActualizado._id ? emprendimientoActualizado : emp
       )
     );
   }, []);
@@ -224,20 +225,19 @@ const Dashboard = () => {
   };
 
   const handleRetry = () => {
+    console.log('🔄 Dashboard: Reintentando carga');
+    setDataLoaded(false);
+    setError('');
+    hasNotifiedReady.current = false;
     fetchEmprendimientos();
   };
 
-  // Cambio: solo mostrar spinner si showSpinner es true
-  if (showSpinner) {
-    return (
-      <div className="dashboard-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Cargando emprendimientos...</p>
-        </div>
-      </div>
-    );
-  }
+  console.log('🎨 Dashboard: Renderizando', {
+    authLoading,
+    isAuthenticated,
+    dataLoaded,
+    emprendimientosCount: emprendimientos.length
+  });
 
   return (
     <div className="dashboard-container">

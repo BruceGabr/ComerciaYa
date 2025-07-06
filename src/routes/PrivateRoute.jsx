@@ -5,25 +5,19 @@ import { useAuth } from "../context/AuthContext";
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
-  // Mostrar loading mientras se verifica la autenticación
+  // Si está cargando, no redirigir aún - esperar a que termine
   if (loading) {
-    return (
-      <div className="dashboard-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Verificando autenticación...</p>
-        </div>
-      </div>
-    );
+    console.log("PrivateRoute: Verificando autenticación...");
+    return null; // o un spinner si prefieres
   }
 
-  // Si no está autenticado, redirigir al login
+  // Solo redirigir si YA terminó de cargar y NO está autenticado
   if (!isAuthenticated) {
     console.log("PrivateRoute: Usuario no autenticado, redirigiendo al login");
     return <Navigate to="/login" replace />;
   }
 
-  // Si está autenticado, mostrar el componente
+  console.log("PrivateRoute: Usuario autenticado, renderizando contenido");
   return children;
 };
 

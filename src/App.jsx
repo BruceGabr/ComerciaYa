@@ -1,52 +1,110 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Header, Sidebar, Footer, ScrollToTop } from './components';
-import { Home, Explorar, Registro, Login, Perfil, Dashboard} from "./pages";
+import { Home, Explorar, Registro, Login, Perfil, Dashboard } from "./pages";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
+import { PageReadyProvider } from "./context/PageReadyContext";
+import { usePageReady } from './context/PageReadyContext';
 
 // Componente interno que tiene acceso al AuthContext
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { pageReady, isLoading, resetPageState, startLoading } = usePageReady();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const location = useLocation();
 
-  // Detectar cambios de tamaño de pantalla
+  // ✅ Efecto para detectar navegación a rutas que requieren carga
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const currentPath = location.pathname;
+    const routesWithData = ['/dashboard', '/perfil'];
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    console.log('🔍 App: Cambio de ruta detectado ->', currentPath);
 
-  // Determinar la clase del main-content según el estado del sidebar
-  const getMainContentClass = () => {
-    if (!isAuthenticated) {
-      return 'main-content';
+    if (routesWithData.includes(currentPath)) {
+      console.log('⚡ App: Ruta con datos detectada, iniciando carga PREVENTIVA');
+      startLoading();
+    } else {
+      resetPageState();
     }
-    
-    return `main-content ${
-      sidebarExpanded 
-        ? 'main-content--with-sidebar-expanded' 
-        : 'main-content--with-sidebar-collapsed'
-    }`;
+  }, [location.pathname, startLoading, resetPageState]);
+
+  // ✅ Determinar si mostrar splash
+  const shouldShowSplash = () => {
+    const currentPath = location.pathname;
+
+    console.log('🔍 App shouldShowSplash:', {
+      path: currentPath,
+      authLoading,
+      isAuthenticated,
+      isLoading,
+      pageReady
+    });
+
+    // SIEMPRE mostrar splash si auth está cargando
+    if (authLoading) {
+      console.log('🔄 App: Splash por auth loading');
+      return true;
+    }
+
+    // Rutas que requieren carga de datos
+    const routesWithData = ['/dashboard', '/perfil'];
+    const isDataRoute = routesWithData.includes(currentPath);
+
+    // Si es una ruta con datos y está autenticado
+    if (isDataRoute && isAuthenticated) {
+      const shouldShow = isLoading || !pageReady;
+      console.log('🎯 App: Ruta con datos -', {
+        isLoading,
+        pageReady,
+        shouldShow
+      });
+      return shouldShow;
+    }
+
+    console.log('❌ App: No mostrar splash');
+    return false;
   };
+
+  const showSplash = shouldShowSplash();
+
+  const getMainContentClass = () => {
+    if (!isAuthenticated) return 'main-content';
+    return `main-content ${sidebarExpanded
+      ? 'main-content--with-sidebar-expanded'
+      : 'main-content--with-sidebar-collapsed'
+      }`;
+  };
+
+  console.log('✅ App: Renderizando contenido principal');
 
   return (
     <div className="app-container">
+      {/* ✅ Mostrar splash como overlay si es necesario */}
+      {showSplash && (
+        <div className="splash-screen">
+          <div className="splash-content">
+            <div className="splash-logo">ComerciaYa</div>
+            <div className="spinner-container">
+              <div className="spinner-circle"></div>
+              <div className="loading-text">
+                {authLoading ? 'Verificando sesión...' : 'Cargando datos...'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Header />
       <div className="app-content">
-        {/* Sidebar solo aparece cuando el usuario está autenticado */}
         {isAuthenticated && (
-          <Sidebar 
+          <Sidebar
             isExpanded={sidebarExpanded}
             setIsExpanded={setSidebarExpanded}
           />
         )}
-        
+
         <main className={getMainContentClass()}>
           <ScrollToTop />
           <div className="content-wrapper">
@@ -76,8 +134,6 @@ function AppContent() {
                   </PublicRoute>
                 }
               />
-
-              {/* Rutas privadas */}
               <Route
                 path="/perfil"
                 element={
@@ -96,8 +152,6 @@ function AppContent() {
               />
             </Routes>
           </div>
-          
-          {/* Footer dentro del contenido scrolleable */}
           <Footer />
         </main>
       </div>
@@ -105,12 +159,13 @@ function AppContent() {
   );
 }
 
-// Componente principal que envuelve todo en el AuthProvider
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <PageReadyProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </PageReadyProvider>
   );
 }
 
