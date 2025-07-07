@@ -7,8 +7,20 @@ import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
 import { usePageReady } from './context/PageReadyContext';
 
-// Definir rutas con datos fuera del componente para evitar re-creaciones
-const ROUTES_WITH_DATA = ['/dashboard', '/perfil'];
+// 🔧 Definir rutas que requieren carga de datos
+const ROUTES_WITH_DATA = [
+  '/dashboard',    // Carga emprendimientos
+  '/perfil',       // Carga perfil de usuario
+  '/explorar',     // Carga productos/emprendimientos públicos
+];
+
+// 🔧 Rutas que NO necesitan cargar datos
+const ROUTES_WITHOUT_DATA = [
+  '/login',
+  '/registro',
+  '/home',
+  '/'
+];
 
 // Componente interno que tiene acceso al AuthContext
 function AppContent() {
@@ -17,36 +29,24 @@ function AppContent() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const location = useLocation();
 
-  // Refs para controlar efectos y evitar renders innecesarios
+  // Refs para controlar efectos
   const previousPathRef = useRef(location.pathname);
   const hasInitializedRef = useRef(false);
-  const authStatusRef = useRef({ isAuthenticated, authLoading });
 
-  // Actualizar ref del estado de auth
-  useEffect(() => {
-    authStatusRef.current = { isAuthenticated, authLoading };
-  }, [isAuthenticated, authLoading]);
-
-  // Efecto para manejar cambios de ruta - optimizado
+  // Efecto para manejar cambios de ruta
   useEffect(() => {
     const currentPath = location.pathname;
     const previousPath = previousPathRef.current;
 
-    // Si la autenticación aún no está determinada, no hacer nada
-    if (isAuthenticated === null) {
-      console.log('⏳ App: Esperando verificación de autenticación...');
-      return;
-    }
-
-    // Solo proceder si la ruta cambió y la autenticación está determinada
+    // Solo proceder si la ruta cambió
     if (previousPath !== currentPath) {
-      console.log('📍 App: Ruta cambió efectivamente');
+      console.log('📍 App: Ruta cambió de', previousPath, 'a', currentPath);
       resetPageState();
       previousPathRef.current = currentPath;
 
-      // Ahora routesWithData está definido
+      // Solo iniciar carga si es una ruta que maneja datos
       if (ROUTES_WITH_DATA.includes(currentPath)) {
-        console.log('⚡ App: Preparando carga para ruta con datos');
+        console.log('⚡ App: Iniciando carga para ruta con datos');
         startLoading();
       }
     }
@@ -55,34 +55,36 @@ function AppContent() {
       hasInitializedRef.current = true;
       console.log('🚀 App: Inicialización completada');
     }
-  }, [location.pathname, startLoading, resetPageState, isAuthenticated]);
+  }, [location.pathname, startLoading, resetPageState]);
 
-  // Determinar si mostrar splash - flujo correcto
+  // Lógica simplificada para mostrar spinner (copiando comportamiento del Header)
   const shouldShowSplash = () => {
     const currentPath = location.pathname;
-    const isDataRoute = ROUTES_WITH_DATA.includes(currentPath);
 
-    // PRIORIDAD 1: Si auth está cargando O la autenticación no está determinada (null)
-    if (authLoading || isAuthenticated === null) {
-      console.log('⏳ App: Splash por auth loading o verificación pendiente');
-      return true;
-    }
-
-    // PRIORIDAD 2: Si es ruta con datos pero no autenticado
-    if (isDataRoute && !isAuthenticated) {
-      console.log('🚫 App: Ruta privada sin autenticación, no mostrar splash');
+    // 1. Si es una ruta que NO maneja datos, NUNCA mostrar spinner
+    // (mismo comportamiento que el Header: renderiza inmediatamente)
+    if (ROUTES_WITHOUT_DATA.includes(currentPath)) {
+      console.log('🚫 App: Ruta sin datos, renderizar inmediatamente');
       return false;
     }
 
-    // PRIORIDAD 3: Si es ruta con datos y autenticado, mostrar splash hasta que pageReady
-    if (isDataRoute && isAuthenticated) {
-      const shouldShow = isLoading || !pageReady;
-      console.log('🎯 App: Ruta con datos autenticada', { isLoading, pageReady, shouldShow });
-      return shouldShow;
+    // 2. Para rutas con datos, solo mostrar spinner si:
+    if (ROUTES_WITH_DATA.includes(currentPath)) {
+      // - La autenticación está cargando Y la ruta requiere autenticación
+      if (authLoading && (currentPath === '/dashboard' || currentPath === '/perfil')) {
+        console.log('⏳ App: Spinner por verificación de autenticación en ruta privada');
+        return true;
+      }
+      
+      // - Los datos están cargando
+      if (isLoading || !pageReady) {
+        console.log('📊 App: Spinner por carga de datos');
+        return true;
+      }
     }
 
-    // Cualquier otra ruta (pública o sin datos)
-    console.log('🌍 App: Ruta pública o sin datos, no mostrar splash');
+    // 3. En todos los demás casos, no mostrar spinner
+    console.log('✅ App: No mostrar spinner');
     return false;
   };
 
@@ -96,7 +98,18 @@ function AppContent() {
       }`;
   };
 
-  console.log('✅ App: Renderizando contenido principal', {
+  // Función para determinar qué texto mostrar en el spinner
+  const getLoadingText = () => {
+    if (authLoading) {
+      return 'Verificando sesión...';
+    }
+    if (isLoading) {
+      return 'Cargando datos...';
+    }
+    return 'Cargando...';
+  };
+
+  console.log('✅ App: Renderizando', {
     showSplash,
     currentPath: location.pathname,
     authLoading,
@@ -115,7 +128,7 @@ function AppContent() {
             <div className="spinner-container">
               <div className="spinner-circle"></div>
               <div className="loading-text">
-                {authLoading ? 'Verificando sesión...' : 'Cargando datos...'}
+                {getLoadingText()}
               </div>
             </div>
           </div>
@@ -137,6 +150,14 @@ function AppContent() {
             <Routes>
               <Route
                 path="/"
+                element={
+                  <PublicRoute>
+                    <Home />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/home"
                 element={
                   <PublicRoute>
                     <Home />

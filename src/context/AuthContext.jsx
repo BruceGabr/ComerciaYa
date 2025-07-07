@@ -6,7 +6,7 @@ import axios from "axios";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = no verificado, true/false = verificado
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,12 +63,17 @@ export const AuthProvider = ({ children }) => {
     let mounted = true;
 
     const checkStoredAuth = async () => {
+      console.log("AuthContext: Verificando sesión almacenada...");
+
       const storedToken = localStorage.getItem('authToken');
       const storedUser = localStorage.getItem('authUser');
 
       if (!storedToken || !storedUser) {
         console.log("AuthContext: No hay sesión almacenada");
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setIsAuthenticated(false);
+          setLoading(false);
+        }
         return;
       }
 
@@ -86,6 +91,7 @@ export const AuthProvider = ({ children }) => {
         } else {
           localStorage.removeItem('authToken');
           localStorage.removeItem('authUser');
+          setIsAuthenticated(false);
           console.log("AuthContext: Token inválido o expirado");
         }
       } catch (error) {
@@ -93,9 +99,12 @@ export const AuthProvider = ({ children }) => {
         if (mounted) {
           localStorage.removeItem('authToken');
           localStorage.removeItem('authUser');
+          setIsAuthenticated(false);
         }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -104,7 +113,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false;
     };
-  }, [verifyToken]); // ✅ Dependencia correcta
+  }, [verifyToken]);
 
   // ✅ Función para obtener perfil completo del usuario - memoizada
   const getUserProfile = useCallback(async () => {

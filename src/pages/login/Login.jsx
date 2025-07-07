@@ -110,18 +110,6 @@ function Login() {
     return "login-message loading";
   };
 
-  // Mostrar loading mientras se verifica la sesión
-  if (loading) {
-    return (
-      <div className="login-container">
-        <div className="login-box">
-          <div className="loading-spinner">
-            <p>Verificando sesión...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="login-container">
