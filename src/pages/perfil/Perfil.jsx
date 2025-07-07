@@ -73,7 +73,7 @@ function Perfil() {
     }
   }, [getUserProfile, authLoading]);
 
-  // ✅ Efecto principal - esperar a que auth esté listo y luego cargar datos
+  // Efecto principal - esperar a que auth esté listo y luego cargar datos
   useEffect(() => {
     console.log('🚀 Perfil: Efecto principal', {
       authLoading,
@@ -95,7 +95,7 @@ function Perfil() {
     }
   }, [authLoading, dataLoaded, loadProfile]);
 
-  // ✅ Efecto para notificar cuando esté listo
+  // Efecto para notificar cuando esté listo
   useEffect(() => {
     const shouldNotify = !authLoading && dataLoaded && !hasNotifiedReady.current;
 
@@ -111,13 +111,11 @@ function Perfil() {
       hasNotifiedReady.current = true;
 
       // Pequeño delay para asegurar que el render esté completo
-      setTimeout(() => {
-        finishLoading();
-      }, 500);
+      finishLoading();
     }
   }, [authLoading, dataLoaded, finishLoading]);
 
-  // ✅ Efecto de limpieza al desmontar
+  // Efecto de limpieza al desmontar
   useEffect(() => {
     return () => {
       console.log('🧹 Perfil: Limpiando estado al desmontar');

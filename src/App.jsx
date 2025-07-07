@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
 import { Header, Sidebar, Footer, ScrollToTop } from './components';
 import { Home, Explorar, Registro, Login, Perfil, Dashboard } from "./pages";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
-import { PageReadyProvider } from "./context/PageReadyContext";
 import { usePageReady } from './context/PageReadyContext';
+
+// Definir rutas con datos fuera del componente para evitar re-creaciones
+const ROUTES_WITH_DATA = ['/dashboard', '/perfil'];
 
 // Componente interno que tiene acceso al AuthContext
 function AppContent() {
@@ -15,55 +17,72 @@ function AppContent() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const location = useLocation();
 
-  // ✅ Efecto para detectar navegación a rutas que requieren carga
+  // Refs para controlar efectos y evitar renders innecesarios
+  const previousPathRef = useRef(location.pathname);
+  const hasInitializedRef = useRef(false);
+  const authStatusRef = useRef({ isAuthenticated, authLoading });
+
+  // Actualizar ref del estado de auth
+  useEffect(() => {
+    authStatusRef.current = { isAuthenticated, authLoading };
+  }, [isAuthenticated, authLoading]);
+
+  // Efecto para manejar cambios de ruta - optimizado
   useEffect(() => {
     const currentPath = location.pathname;
-    const routesWithData = ['/dashboard', '/perfil'];
+    const previousPath = previousPathRef.current;
 
-    console.log('🔍 App: Cambio de ruta detectado ->', currentPath);
-
-    if (routesWithData.includes(currentPath)) {
-      console.log('⚡ App: Ruta con datos detectada, iniciando carga PREVENTIVA');
-      startLoading();
-    } else {
-      resetPageState();
+    // Si la autenticación aún no está determinada, no hacer nada
+    if (isAuthenticated === null) {
+      console.log('⏳ App: Esperando verificación de autenticación...');
+      return;
     }
-  }, [location.pathname, startLoading, resetPageState]);
 
-  // ✅ Determinar si mostrar splash
+    // Solo proceder si la ruta cambió y la autenticación está determinada
+    if (previousPath !== currentPath) {
+      console.log('📍 App: Ruta cambió efectivamente');
+      resetPageState();
+      previousPathRef.current = currentPath;
+
+      // Ahora routesWithData está definido
+      if (ROUTES_WITH_DATA.includes(currentPath)) {
+        console.log('⚡ App: Preparando carga para ruta con datos');
+        startLoading();
+      }
+    }
+
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      console.log('🚀 App: Inicialización completada');
+    }
+  }, [location.pathname, startLoading, resetPageState, isAuthenticated]);
+
+  // Determinar si mostrar splash - flujo correcto
   const shouldShowSplash = () => {
     const currentPath = location.pathname;
+    const isDataRoute = ROUTES_WITH_DATA.includes(currentPath);
 
-    console.log('🔍 App shouldShowSplash:', {
-      path: currentPath,
-      authLoading,
-      isAuthenticated,
-      isLoading,
-      pageReady
-    });
-
-    // SIEMPRE mostrar splash si auth está cargando
-    if (authLoading) {
-      console.log('🔄 App: Splash por auth loading');
+    // PRIORIDAD 1: Si auth está cargando O la autenticación no está determinada (null)
+    if (authLoading || isAuthenticated === null) {
+      console.log('⏳ App: Splash por auth loading o verificación pendiente');
       return true;
     }
 
-    // Rutas que requieren carga de datos
-    const routesWithData = ['/dashboard', '/perfil'];
-    const isDataRoute = routesWithData.includes(currentPath);
+    // PRIORIDAD 2: Si es ruta con datos pero no autenticado
+    if (isDataRoute && !isAuthenticated) {
+      console.log('🚫 App: Ruta privada sin autenticación, no mostrar splash');
+      return false;
+    }
 
-    // Si es una ruta con datos y está autenticado
+    // PRIORIDAD 3: Si es ruta con datos y autenticado, mostrar splash hasta que pageReady
     if (isDataRoute && isAuthenticated) {
       const shouldShow = isLoading || !pageReady;
-      console.log('🎯 App: Ruta con datos -', {
-        isLoading,
-        pageReady,
-        shouldShow
-      });
+      console.log('🎯 App: Ruta con datos autenticada', { isLoading, pageReady, shouldShow });
       return shouldShow;
     }
 
-    console.log('❌ App: No mostrar splash');
+    // Cualquier otra ruta (pública o sin datos)
+    console.log('🌍 App: Ruta pública o sin datos, no mostrar splash');
     return false;
   };
 
@@ -77,11 +96,18 @@ function AppContent() {
       }`;
   };
 
-  console.log('✅ App: Renderizando contenido principal');
+  console.log('✅ App: Renderizando contenido principal', {
+    showSplash,
+    currentPath: location.pathname,
+    authLoading,
+    isAuthenticated,
+    isLoading,
+    pageReady
+  });
 
   return (
     <div className="app-container">
-      {/* ✅ Mostrar splash como overlay si es necesario */}
+      {/* Mostrar splash como overlay si es necesario */}
       {showSplash && (
         <div className="splash-screen">
           <div className="splash-content">
@@ -161,11 +187,7 @@ function AppContent() {
 
 function App() {
   return (
-    <PageReadyProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </PageReadyProvider>
+    <AppContent />
   );
 }
 

@@ -1,10 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { usePageReady } from "../../context/PageReadyContext";
 import "./Sidebar.css";
 
 function Sidebar({ isExpanded, setIsExpanded }) {
   const { logout } = useAuth();
+  const { startLoading } = usePageReady();
   const location = useLocation();
 
   const navItems = [
@@ -24,29 +26,38 @@ function Sidebar({ isExpanded, setIsExpanded }) {
     setIsExpanded(!isExpanded);
   };
 
+  // ✅ Función para manejar clics en enlaces del sidebar
+  const handleNavClick = (to) => {
+    // Solo iniciar carga si no estamos ya en esa ruta
+    if (location.pathname !== to) {
+      console.log(`🔄 Sidebar: Navegando a ${to}, iniciando carga`);
+      startLoading();
+    }
+  };
+
   return (
     <aside className={`sidebar ${isExpanded ? 'sidebar--expanded' : 'sidebar--collapsed'}`}>
       <div className="sidebar__header">
-        <button 
-          className="sidebar__toggle" 
+        <button
+          className="sidebar__toggle"
           onClick={toggleSidebar}
           title={isExpanded ? "Contraer sidebar" : "Expandir sidebar"}
         >
           <i className={`fas ${isExpanded ? 'fa-chevron-left' : 'fa-chevron-right'}`}></i>
         </button>
       </div>
-      
+
       <hr className="sidebar__separator" />
-      
+
       <ul className="sidebar__menu">
         {navItems.map(({ to, icon, label }) => (
           <li key={to} className="sidebar__item">
             <Link
               to={to}
-              className={`sidebar__link ${
-                location.pathname === to ? "sidebar__link--active" : ""
-              }`}
+              className={`sidebar__link ${location.pathname === to ? "sidebar__link--active" : ""
+                }`}
               title={!isExpanded ? label : ""}
+              onClick={() => handleNavClick(to)}
             >
               <i className={`sidebar__icon ${icon}`}></i>
               {isExpanded && <span className="sidebar__label">{label}</span>}
@@ -57,8 +68,8 @@ function Sidebar({ isExpanded, setIsExpanded }) {
 
       <hr className="sidebar__separator" />
 
-      <button 
-        className="sidebar__logout" 
+      <button
+        className="sidebar__logout"
         onClick={logout}
         title={!isExpanded ? "Cerrar sesión" : ""}
       >

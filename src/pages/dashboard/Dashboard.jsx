@@ -20,8 +20,12 @@ const Dashboard = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   const navigate = useNavigate();
+
+  // Referencias para controlar efectos
   const fetchingRef = useRef(false);
   const hasNotifiedReady = useRef(false);
+  const componentMounted = useRef(true);
+  const abortControllerRef = useRef(null);
 
   const categorias = [
     'Ropa y Accesorios', 'Hogar y Decoración', 'Tecnología',
@@ -33,6 +37,7 @@ const Dashboard = () => {
   ];
 
   const fetchEmprendimientos = useCallback(async () => {
+    // Evitar fetches concurrentes
     if (fetchingRef.current) {
       console.log('⏭️ Dashboard: Fetch ya en progreso, saltando');
       return;
@@ -40,7 +45,6 @@ const Dashboard = () => {
 
     if (!isAuthenticated || !token) {
       console.log('❌ Dashboard: No autenticado para fetch');
-      logout();
       return;
     }
 
@@ -50,12 +54,22 @@ const Dashboard = () => {
       fetchingRef.current = true;
       setError('');
 
+      // Crear nuevo AbortController para esta petición
+      abortControllerRef.current = new AbortController();
+
       const response = await fetch('http://localhost:5000/api/emprendimientos/mis-emprendimientos', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        signal: abortControllerRef.current.signal
       });
+
+      // Verificar si el componente sigue montado
+      if (!componentMounted.current) {
+        console.log('🚫 Dashboard: Componente desmontado, cancelando fetch');
+        return;
+      }
 
       if (response.status === 401) {
         console.log('🔒 Dashboard: Token expirado');
@@ -68,27 +82,77 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
+
+      // Verificar nuevamente si el componente sigue montado
+      if (!componentMounted.current) {
+        console.log('🚫 Dashboard: Componente desmontado antes de setear datos');
+        return;
+      }
+
       console.log('✅ Dashboard: Emprendimientos obtenidos:', data.length);
       setEmprendimientos(Array.isArray(data) ? data : []);
       setDataLoaded(true);
 
     } catch (err) {
+      // Ignorar errores de abort
+      if (err.name === 'AbortError') {
+        console.log('⏹️ Dashboard: Fetch cancelado');
+        return;
+      }
+
+      if (!componentMounted.current) {
+        console.log('🚫 Dashboard: Componente desmontado, ignorando error');
+        return;
+      }
+
       console.error('❌ Dashboard: Error fetching emprendimientos:', err);
       setError(err.message || 'Error al cargar emprendimientos');
-      setDataLoaded(true); // Marcar como completado aunque haya error
+      setDataLoaded(true);
     } finally {
       fetchingRef.current = false;
+      abortControllerRef.current = null;
     }
   }, [isAuthenticated, token, logout]);
 
-  // ✅ Efecto principal - esperar a que auth esté listo y luego cargar datos
+  // Efecto de montaje/desmontaje - configuración inicial
+  useEffect(() => {
+    console.log('🏗️ Dashboard: Componente montado');
+    componentMounted.current = true;
+    hasNotifiedReady.current = false;
+
+    return () => {
+      console.log('🧹 Dashboard: Componente desmontado');
+      componentMounted.current = false;
+
+      // Cancelar fetch en progreso
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+
+      // Limpiar estado del contexto
+      resetPageState();
+
+      // Resetear refs
+      fetchingRef.current = false;
+      hasNotifiedReady.current = false;
+    };
+  }, [resetPageState]);
+
+  // Efecto principal - manejo de autenticación y carga de datos
   useEffect(() => {
     console.log('🚀 Dashboard: Efecto principal', {
       authLoading,
       isAuthenticated,
       hasToken: !!token,
-      dataLoaded
+      dataLoaded,
+      componentMounted: componentMounted.current
     });
+
+    // No hacer nada si el componente no está montado
+    if (!componentMounted.current) {
+      return;
+    }
 
     // Si auth está cargando, no hacer nada
     if (authLoading) {
@@ -110,15 +174,20 @@ const Dashboard = () => {
     }
   }, [authLoading, isAuthenticated, token, dataLoaded, fetchEmprendimientos, logout]);
 
-  // ✅ Efecto para notificar cuando esté listo
+  // Efecto para notificar cuando esté listo
   useEffect(() => {
-    const shouldNotify = !authLoading && isAuthenticated && dataLoaded && !hasNotifiedReady.current;
+    const shouldNotify = !authLoading &&
+      isAuthenticated &&
+      dataLoaded &&
+      !hasNotifiedReady.current &&
+      componentMounted.current;
 
     console.log('🔍 Dashboard: Verificando si notificar', {
       authLoading,
       isAuthenticated,
       dataLoaded,
       hasNotifiedReady: hasNotifiedReady.current,
+      componentMounted: componentMounted.current,
       shouldNotify
     });
 
@@ -126,23 +195,10 @@ const Dashboard = () => {
       console.log('✅ Dashboard: Notificando que está listo');
       hasNotifiedReady.current = true;
 
-      // Pequeño delay para asegurar que el render esté completo
-      setTimeout(() => {
-        finishLoading();
-      }, 500);
+      // Tiempo extendido: 
+      finishLoading();
     }
   }, [authLoading, isAuthenticated, dataLoaded, finishLoading]);
-
-  // ✅ Efecto de limpieza al desmontar
-  useEffect(() => {
-    return () => {
-      console.log('🧹 Dashboard: Limpiando estado al desmontar');
-      resetPageState();
-      setDataLoaded(false);
-      hasNotifiedReady.current = false;
-      fetchingRef.current = false;
-    };
-  }, [resetPageState]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -192,19 +248,29 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      setEmprendimientos(prev => [...prev, data.emprendimiento]);
-      setShowCreateModal(false);
-      setNuevoEmprendimiento({ nombre: '', descripcion: '', categoria: '' });
+
+      // Solo actualizar si el componente sigue montado
+      if (componentMounted.current) {
+        setEmprendimientos(prev => [...prev, data.emprendimiento]);
+        setShowCreateModal(false);
+        setNuevoEmprendimiento({ nombre: '', descripcion: '', categoria: '' });
+      }
 
     } catch (err) {
       console.error('Error creating emprendimiento:', err);
-      setError(err.message || 'Error al crear emprendimiento');
+      if (componentMounted.current) {
+        setError(err.message || 'Error al crear emprendimiento');
+      }
     } finally {
-      setIsSubmitting(false);
+      if (componentMounted.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleUpdateEmprendimiento = useCallback((emprendimientoActualizado) => {
+    if (!componentMounted.current) return;
+
     setEmprendimientos(prev =>
       prev.map(emp =>
         emp._id === emprendimientoActualizado._id ? emprendimientoActualizado : emp
@@ -213,6 +279,8 @@ const Dashboard = () => {
   }, []);
 
   const handleDeleteEmprendimiento = useCallback((emprendimientoId) => {
+    if (!componentMounted.current) return;
+
     setEmprendimientos(prev =>
       prev.filter(emp => emp._id !== emprendimientoId)
     );
@@ -236,7 +304,8 @@ const Dashboard = () => {
     authLoading,
     isAuthenticated,
     dataLoaded,
-    emprendimientosCount: emprendimientos.length
+    emprendimientosCount: emprendimientos.length,
+    componentMounted: componentMounted.current
   });
 
   return (

@@ -1,58 +1,19 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Función para verificar token almacenado al iniciar la app
-  useEffect(() => {
-    const checkStoredAuth = async () => {
-      const storedToken = localStorage.getItem('authToken');
-      const storedUser = localStorage.getItem('authUser');
-
-      if (!storedToken || !storedUser) {
-        console.log("AuthContext: No hay sesión almacenada");
-        setLoading(false); // 👈 necesaria
-        return;
-      }
-
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        const isValid = await verifyToken(storedToken, parsedUser.id);
-
-        if (isValid) {
-          setToken(storedToken);
-          setUser(parsedUser);
-          setIsAuthenticated(true);
-          console.log("AuthContext: Sesión restaurada para:", parsedUser.correo);
-        } else {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('authUser');
-          console.log("AuthContext: Token inválido o expirado");
-        }
-      } catch (error) {
-        console.error("Error verificando sesión:", error);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('authUser');
-      } finally {
-        setLoading(false); // ✅ siempre al final
-      }
-    };
-
-    checkStoredAuth();
-  }, []);
-
-
-  // Función para verificar si un token es válido
-  const verifyToken = async (token, userId) => {
+  // ✅ Función para verificar si un token es válido - memoizada
+  const verifyToken = useCallback(async (token, userId) => {
     try {
       const response = await axios.get(`http://localhost:5000/api/user/verify/${userId}`, {
         headers: {
@@ -64,10 +25,24 @@ export const AuthProvider = ({ children }) => {
       console.error("Error verificando token:", error);
       return false;
     }
-  };
+  }, []);
 
-  // Función de login - recibe token y datos del usuario
-  const login = (authToken, userData) => {
+  // ✅ Función de logout memoizada
+  const logout = useCallback(() => {
+    setIsAuthenticated(false);
+    setUser(null);
+    setToken(null);
+
+    // Limpiar localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authUser');
+
+    console.log("AuthContext: Usuario deslogueado");
+    navigate("/login");
+  }, [navigate]);
+
+  // ✅ Función de login memoizada
+  const login = useCallback((authToken, userData) => {
     try {
       setToken(authToken);
       setUser(userData);
@@ -81,24 +56,58 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Error en login:", error);
     }
-  };
+  }, []);
 
-  // Función de logout
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    setToken(null);
+  // ✅ Función para verificar token almacenado - optimizada
+  useEffect(() => {
+    let mounted = true;
 
-    // Limpiar localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
+    const checkStoredAuth = async () => {
+      const storedToken = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('authUser');
 
-    console.log("AuthContext: Usuario deslogueado");
-    navigate("/login");
-  };
+      if (!storedToken || !storedUser) {
+        console.log("AuthContext: No hay sesión almacenada");
+        if (mounted) setLoading(false);
+        return;
+      }
 
-  // Función para obtener perfil completo del usuario
-  const getUserProfile = async () => {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        const isValid = await verifyToken(storedToken, parsedUser.id);
+
+        if (!mounted) return;
+
+        if (isValid) {
+          setToken(storedToken);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          console.log("AuthContext: Sesión restaurada para:", parsedUser.correo);
+        } else {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authUser');
+          console.log("AuthContext: Token inválido o expirado");
+        }
+      } catch (error) {
+        console.error("Error verificando sesión:", error);
+        if (mounted) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authUser');
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    checkStoredAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [verifyToken]); // ✅ Dependencia correcta
+
+  // ✅ Función para obtener perfil completo del usuario - memoizada
+  const getUserProfile = useCallback(async () => {
     if (!token || !user) {
       throw new Error("No hay usuario autenticado");
     }
@@ -120,10 +129,10 @@ export const AuthProvider = ({ children }) => {
 
       throw error;
     }
-  };
+  }, [token, user, logout]);
 
-  // Función para actualizar perfil
-  const updateUserProfile = async (profileData) => {
+  // ✅ Función para actualizar perfil - memoizada
+  const updateUserProfile = useCallback(async (profileData) => {
     if (!token || !user) {
       throw new Error("No hay usuario autenticado");
     }
@@ -145,10 +154,10 @@ export const AuthProvider = ({ children }) => {
 
       throw error;
     }
-  };
+  }, [token, user, logout]);
 
-  // Función para hacer requests autenticados
-  const makeAuthenticatedRequest = async (url, options = {}) => {
+  // ✅ Función para hacer requests autenticados - memoizada
+  const makeAuthenticatedRequest = useCallback(async (url, options = {}) => {
     if (!token) {
       throw new Error("No hay token de autenticación");
     }
@@ -171,9 +180,10 @@ export const AuthProvider = ({ children }) => {
       }
       throw error;
     }
-  };
+  }, [token, logout]);
 
-  const value = {
+  // ✅ Memoizar el valor del contexto para evitar re-renders
+  const value = useMemo(() => ({
     isAuthenticated,
     user,
     token,
@@ -183,7 +193,17 @@ export const AuthProvider = ({ children }) => {
     getUserProfile,
     updateUserProfile,
     makeAuthenticatedRequest
-  };
+  }), [
+    isAuthenticated,
+    user,
+    token,
+    loading,
+    login,
+    logout,
+    getUserProfile,
+    updateUserProfile,
+    makeAuthenticatedRequest
+  ]);
 
   return (
     <AuthContext.Provider value={value}>
