@@ -31,6 +31,8 @@ const registroSchema = new mongoose.Schema({
   numeroTelefonico: { type: String, required: true, unique: true },
   correo: { type: String, required: true, unique: true },
   contrasena: { type: String, required: true },
+  imagenUrl: { type: String, default: '' }
+
 }, { timestamps: true });
 
 // Schema para Usuario
@@ -54,6 +56,7 @@ const emprendimientoSchema = new mongoose.Schema({
   totalValoraciones: { type: Number, default: 0 },
   promedioValoraciones: { type: Number, default: 0, min: 0, max: 5 },
   activo: { type: Boolean, default: true }, // Para soft delete
+  imagenUrl: { type: String }, // Nueva línea
 }, { timestamps: true });
 
 // Schema para Producto/Servicio (ACTUALIZADO)
@@ -69,6 +72,8 @@ const productoSchema = new mongoose.Schema({
   // Referencia al Emprendimiento al que pertenece
   emprendimiento: { type: mongoose.Schema.Types.ObjectId, ref: 'Emprendimiento', required: true },
   activo: { type: Boolean, default: true }, // Para soft delete
+  imagenUrl: { type: String }, // Nueva línea
+
 }, { timestamps: true });
 
 // NUEVO: Schema para Valoraciones

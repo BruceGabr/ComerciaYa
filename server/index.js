@@ -5,8 +5,30 @@ import jwt from 'jsonwebtoken';
 import connectDB from './../src/db/connection.js';
 import { Registro, Usuario, Emprendimiento, Producto, Valoracion, CATEGORIAS_EMPRENDIMIENTOS } from './../src/db/models.js';
 import bcrypt from 'bcryptjs';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { body, validationResult } from 'express-validator';
+
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'comerciaya',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 800, height: 800, crop: 'limit' }],
+  },
+});
+
+const upload = multer({ storage: storage });
 
 dotenv.config();
+
+cloudinary.config({
+  cloud_name: process.env.dht58xgki,
+  api_key: process.env.224396156277258,
+  api_secret: process.qefbSX6XcrLMgZV5OX5uKfUoBj8,
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -66,25 +88,56 @@ const normalizeText = (text) => {
 // ==================== RUTAS DE AUTENTICACIÓN ====================
 
 // Ruta de Registro
-app.post('/api/register', async (req, res) => {
-  try {
-    console.log('--- Petición de registro recibida ---');
-    console.log('Datos de registro:', req.body.correo);
+app.post('/api/register', [
+  body('nombre')
+    .notEmpty().withMessage('El nombre es obligatorio')
+    .matches(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/).withMessage('El nombre solo puede contener letras y espacios'),
+  
+  body('apellido')
+    .notEmpty().withMessage('El apellido es obligatorio')
+    .matches(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/).withMessage('El apellido solo puede contener letras y espacios'),
+  
+  body('fechaNacimiento').custom(value => {
+    if (!value?.dia || !value?.mes || !value?.año) {
+      throw new Error('Fecha de nacimiento incompleta');
+    }
+    const fecha = new Date(`${value.año}-${value.mes}-${value.dia}`);
+    const hoy = new Date();
+    if (isNaN(fecha.getTime()) || fecha > hoy) {
+      throw new Error('Fecha de nacimiento inválida o en el futuro');
+    }
+    return true;
+  }),
 
+  body('genero')
+    .notEmpty().withMessage('El género es obligatorio'),
+
+  body('contacto')
+    .notEmpty().withMessage('El número telefónico es obligatorio')
+    .isMobilePhone('any').withMessage('Número telefónico inválido'),
+
+  body('correo')
+    .notEmpty().withMessage('El correo es obligatorio')
+    .isEmail().withMessage('Correo electrónico inválido'),
+
+  body('contrasena')
+    .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: 'Datos inválidos', errors: errors.array() });
+  }
+
+  try {
     const { nombre, apellido, fechaNacimiento, genero, contacto, correo, contrasena } = req.body;
 
-    // Validar si el usuario ya existe
     const existingUser = await Usuario.findOne({ correo });
     if (existingUser) {
-      console.log('Intento de registro con correo existente (409):', correo);
       return res.status(409).json({ message: 'El correo ya está registrado.' });
     }
 
-    // Hashear la contraseña
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(contrasena, salt);
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
 
-    // Crear el nuevo registro
     const newRegistro = new Registro({
       nombre,
       apellido,
@@ -96,70 +149,62 @@ app.post('/api/register', async (req, res) => {
     });
     await newRegistro.save();
 
-    // Crear el nuevo usuario
-    const newUsuario = new Usuario({
-      correo,
-      contrasena: hashedPassword,
-    });
+    const newUsuario = new Usuario({ correo, contrasena: hashedPassword });
     await newUsuario.save();
 
-    console.log('Usuario y Registro guardados con éxito para:', correo);
     res.status(201).json({ message: 'Usuario registrado con éxito.', userId: newUsuario._id });
 
   } catch (error) {
-    console.error('Error al registrar usuario:', error);
     res.status(500).json({ message: 'Error interno del servidor al registrar usuario.', error: error.message });
   }
 });
 
-// Ruta de Login
-app.post('/api/login', async (req, res) => {
-  try {
-    console.log('--- Petición de login recibida ---');
-    console.log('Intento de login para correo:', req.body.correo);
 
+
+// ==================== RUTAS DE USUARIO ====================
+app.post('/api/login', [
+  body('correo')
+    .notEmpty().withMessage('El correo es obligatorio')
+    .isEmail().withMessage('Correo electrónico inválido'),
+
+  body('contraseña')
+    .notEmpty().withMessage('La contraseña es obligatoria')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: 'Datos inválidos', errors: errors.array() });
+  }
+
+  try {
     const { correo, contraseña } = req.body;
 
     const user = await Usuario.findOne({ correo });
     if (!user) {
-      console.log('Fallo de login: Usuario no encontrado para correo:', correo);
       return res.status(400).json({ message: 'Credenciales inválidas.' });
     }
 
     const isMatch = await bcrypt.compare(contraseña, user.contrasena);
     if (!isMatch) {
-      console.log('Fallo de login: Contraseña incorrecta para correo:', correo);
       return res.status(400).json({ message: 'Credenciales inválidas.' });
     }
 
     const token = jwt.sign(
-      { 
-        userId: user._id.toString(),
-        correo: user.correo 
-      },
+      { userId: user._id.toString(), correo: user.correo },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    console.log('Inicio de sesión exitoso para usuario:', user.correo);
-    
-    res.status(200).json({ 
+    res.status(200).json({
       message: 'Inicio de sesión exitoso.',
-      token: token,
-      user: { 
-        id: user._id, 
-        correo: user.correo 
-      }
+      token,
+      user: { id: user._id, correo: user.correo }
     });
 
   } catch (error) {
-    console.error('Error al iniciar sesión:', error);
     res.status(500).json({ message: 'Error interno del servidor al iniciar sesión.', error: error.message });
   }
 });
-
-// ==================== RUTAS DE USUARIO ====================
-
+ 
 // Verificar usuario
 app.get('/api/user/verify/:userId', verifyToken, async (req, res) => {
   try {
@@ -222,32 +267,51 @@ app.get('/api/user/profile/:userId', verifyToken, async (req, res) => {
 });
 
 // Actualizar perfil del usuario
-app.put('/api/user/profile/:userId', verifyToken, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    
-    if (req.user.userId !== userId) {
-      return res.status(403).json({ message: 'No autorizado para modificar este perfil' });
+app.put('/api/user/profile/:userId', verifyToken, upload.single('imagen'), [
+  body('nombre').optional().matches(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/).withMessage('Nombre inválido'),
+  body('apellido').optional().matches(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/).withMessage('Apellido inválido'),
+  body('fechaNacimiento').optional().custom(value => {
+    const fecha = new Date(value);
+    if (isNaN(fecha.getTime()) || fecha > new Date()) {
+      throw new Error('Fecha de nacimiento inválida');
     }
-    
+    return true;
+  }),
+  body('genero').optional().isIn(['masculino', 'femenino', 'otro']).withMessage('Género inválido'),
+  body('numeroTelefonico').optional().isMobilePhone('any').withMessage('Teléfono inválido')
+], async (req, res) => {
+  const { userId } = req.params;
+
+  if (req.user.userId !== userId) {
+    return res.status(403).json({ message: 'No autorizado para modificar este perfil' });
+  }
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: 'Datos inválidos', errors: errors.array() });
+  }
+
+  try {
     const { nombre, apellido, fechaNacimiento, genero, numeroTelefonico } = req.body;
-    
+    const imagenUrl = req.file?.path; // Imagen de Cloudinary si fue enviada
+
     const updatedProfile = await Registro.findOneAndUpdate(
       { correo: req.user.correo },
       {
-        nombre,
-        apellido,
-        fechaNacimiento,
-        genero,
-        numeroTelefonico
+        ...(nombre && { nombre }),
+        ...(apellido && { apellido }),
+        ...(fechaNacimiento && { fechaNacimiento }),
+        ...(genero && { genero }),
+        ...(numeroTelefonico && { numeroTelefonico }),
+        ...(imagenUrl && { imagenUrl }) // Solo si se subió imagen
       },
       { new: true }
     );
-    
+
     if (!updatedProfile) {
-      return res.status(404).json({ message: 'Perfil de usuario no encontrado' });
+      return res.status(404).json({ message: 'Perfil no encontrado' });
     }
-    
+
     const profileData = {
       id: updatedProfile._id,
       nombre: updatedProfile.nombre,
@@ -256,16 +320,29 @@ app.put('/api/user/profile/:userId', verifyToken, async (req, res) => {
       genero: updatedProfile.genero,
       numeroTelefonico: updatedProfile.numeroTelefonico,
       correo: updatedProfile.correo,
+      imagenUrl: updatedProfile.imagenUrl,
       createdAt: updatedProfile.createdAt,
       updatedAt: updatedProfile.updatedAt
     };
-    
-    console.log('Perfil actualizado para usuario:', req.user.correo);
+
     res.status(200).json(profileData);
-    
+
   } catch (error) {
     console.error('Error actualizando perfil:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+
+
+// ==================== RUTA PARA SUBIR IMAGEN A CLOUDINARY ====================
+app.post('/api/upload/emprendimiento', verifyToken, upload.single('imagen'), async (req, res) => {
+  try {
+    const imageUrl = req.file.path; // URL pública de la imagen en Cloudinary
+    res.status(200).json({ imageUrl });
+  } catch (error) {
+    console.error('Error al subir imagen:', error);
+    res.status(500).json({ message: 'Error al subir la imagen', error: error.message });
   }
 });
 
@@ -777,6 +854,78 @@ app.delete('/api/valoraciones/:id', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 });
+
+// ==================== SUBIDA DE IMÁGENES ====================
+
+// Imagen para emprendimiento
+app.post('/api/emprendimientos/:id/imagen', verifyToken, upload.single('imagen'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const emprendimiento = await Emprendimiento.findOneAndUpdate(
+      { _id: id, usuario: req.user.userId },
+      { imagenUrl: req.file.path },
+      { new: true }
+    );
+
+    if (!emprendimiento) {
+      return res.status(404).json({ message: 'Emprendimiento no encontrado o no autorizado' });
+    }
+
+    res.status(200).json({ message: 'Imagen subida correctamente', imagenUrl: emprendimiento.imagenUrl });
+  } catch (error) {
+    console.error('Error al subir imagen:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Imagen para producto/servicio
+app.post('/api/productos/:id/imagen', verifyToken, upload.single('imagen'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const producto = await Producto.findById(id).populate('emprendimiento');
+
+    if (!producto || producto.emprendimiento.usuario.toString() !== req.user.userId) {
+      return res.status(404).json({ message: 'Producto no encontrado o no autorizado' });
+    }
+
+    producto.imagenUrl = req.file.path;
+    await producto.save();
+
+    res.status(200).json({ message: 'Imagen subida correctamente', imagenUrl: producto.imagenUrl });
+  } catch (error) {
+    console.error('Error al subir imagen de producto:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// Imagen de perfil de usuario
+app.post('/api/usuarios/:userId/imagen', verifyToken, upload.single('imagen'), async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (req.user.userId !== userId) {
+      return res.status(403).json({ message: 'No autorizado para modificar este perfil' });
+    }
+
+    const registro = await Registro.findOneAndUpdate(
+      { correo: req.user.correo },
+      { imagenUrl: req.file.path },
+      { new: true }
+    );
+
+    if (!registro) {
+      return res.status(404).json({ message: 'Perfil no encontrado' });
+    }
+
+    res.status(200).json({ message: 'Imagen de perfil subida correctamente', imagenUrl: registro.imagenUrl });
+  } catch (error) {
+    console.error('Error al subir imagen de usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
 
 // Iniciar el servidor
 app.listen(PORT, () => {
