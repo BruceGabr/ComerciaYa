@@ -6,7 +6,6 @@ import bgRegistro from "../../assets/images/bg-registro2.webp";
 import axios from "axios";
 import "./Registro.css";
 
-
 // Hooks personalizados
 const useFormData = (initialData) => {
   const [data, setData] = useState(initialData);
@@ -410,19 +409,51 @@ function Registro() {
     };
 
     try {
-      const response = await axios.post("http://localhost:5000/api/register", dataToSend);
+      // Paso 1: Registrar usuario
+      const registerResponse = await axios.post("http://localhost:5000/api/register", dataToSend);
 
-      if (response.status === 201) {
-        setMensaje("¡Registro exitoso! Redirigiendo...");
-        setTimeout(() => {
-          login();
-          navigate("/miemprendimiento");
-        }, 1500);
+      if (registerResponse.status === 201) {
+        console.log("Usuario registrado exitosamente");
+        setMensaje("Registro exitoso! Iniciando sesión...");
+
+        // Paso 2: Hacer login automático después del registro
+        const loginResponse = await axios.post("http://localhost:5000/api/login", {
+          correo: formData.correo,
+          contraseña: formData.contrasena
+        });
+
+        if (loginResponse.status === 200) {
+          const { token, user } = loginResponse.data;
+
+          // Paso 3: Usar la función login del contexto con los datos correctos
+          login(token, user);
+
+          console.log("Auto-login exitoso, redirigiendo...");
+          setMensaje("¡Bienvenido! Redirigiendo al dashboard...");
+
+          // Redirigir al dashboard después de un pequeño delay
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        } else {
+          // Si el login automático falla, redirigir al login manual
+          setMensaje("Registro exitoso. Redirigiendo al login...");
+          setTimeout(() => {
+            navigate("/login");
+          }, 2000);
+        }
       }
     } catch (error) {
-      console.error("Error al registrar usuario:", error.response?.data || error.message);
+      console.error("Error en el proceso de registro:", error);
+
       if (error.response?.status === 409) {
         setMensaje(error.response.data.message);
+      } else if (error.response?.status === 400 && error.response.data.message === 'Credenciales inválidas.') {
+        // Error en el auto-login, pero registro exitoso
+        setMensaje("Registro exitoso. Por favor, inicia sesión manualmente.");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } else {
         setMensaje("Error al registrar el usuario. Por favor, inténtalo de nuevo.");
       }
@@ -450,7 +481,7 @@ function Registro() {
   }, [currentStep, formData, updateField, updateNestedField, errors]);
 
   return (
-    <div 
+    <div
       className="registro-container"
       style={{
         backgroundImage: imageLoaded ? `url(${bgRegistro})` : 'none',
@@ -505,7 +536,7 @@ function Registro() {
         </div>
 
         {mensaje && (
-          <div className={`message ${mensaje.includes("exitoso") ? "success" : "error"}`}>
+          <div className={`message ${mensaje.includes("exitoso") || mensaje.includes("Bienvenido") ? "success" : "error"}`}>
             {mensaje}
           </div>
         )}
