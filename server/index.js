@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import 'dotenv/config';      
+import 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import connectDB from './../src/db/connection.js';
 import { Registro, Usuario, Emprendimiento, Producto, Valoracion, CATEGORIAS_EMPRENDIMIENTOS } from './../src/db/models.js';
@@ -270,12 +270,14 @@ app.put('/api/user/profile/:userId', verifyToken, upload.single('imagen'), [
   body('apellido').optional().matches(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/).withMessage('Apellido inválido'),
   body('fechaNacimiento').optional().custom(value => {
     const fecha = new Date(value);
+    // Verificar que la fecha no sea "Invalid Date" y no esté en el futuro
     if (isNaN(fecha.getTime()) || fecha > new Date()) {
-      throw new Error('Fecha de nacimiento inválida');
+      throw new Error('Fecha de nacimiento inválida o en el futuro');
     }
     return true;
   }),
-  body('genero').optional().isIn(['masculino', 'femenino', 'otro']).withMessage('Género inválido'),
+  // ¡¡CAMBIO AQUÍ: Validaciones de género para que coincidan con el frontend!!
+  body('genero').optional().isIn(['Mujer', 'Hombre', 'Sin Especificar']).withMessage('Género inválido'),
   body('numeroTelefonico').optional().isMobilePhone('any').withMessage('Teléfono inválido')
 ], async (req, res) => {
   const { userId } = req.params;
@@ -286,24 +288,28 @@ app.put('/api/user/profile/:userId', verifyToken, upload.single('imagen'), [
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.error('Error de validación al actualizar perfil:', errors.array()); // Log de errores de validación
     return res.status(400).json({ message: 'Datos inválidos', errors: errors.array() });
   }
 
   try {
     const { nombre, apellido, fechaNacimiento, genero, numeroTelefonico } = req.body;
-    const imagenUrl = req.file?.path; // Imagen de Cloudinary si fue enviada
+    const imagenUrl = req.file?.path; // URL de Cloudinary si la imagen fue enviada
+
+    // Construir el objeto de actualización solo con los campos presentes
+    const updateFields = {};
+    if (nombre !== undefined) updateFields.nombre = nombre;
+    if (apellido !== undefined) updateFields.apellido = apellido;
+    // Asegurarse de que fechaNacimiento se convierte a Date solo si está presente
+    if (fechaNacimiento !== undefined) updateFields.fechaNacimiento = new Date(fechaNacimiento);
+    if (genero !== undefined) updateFields.genero = genero;
+    if (numeroTelefonico !== undefined) updateFields.numeroTelefonico = numeroTelefonico;
+    if (imagenUrl !== undefined) updateFields.imagenUrl = imagenUrl; // Solo si se subió imagen
 
     const updatedProfile = await Registro.findOneAndUpdate(
-      { correo: req.user.correo },
-      {
-        ...(nombre && { nombre }),
-        ...(apellido && { apellido }),
-        ...(fechaNacimiento && { fechaNacimiento }),
-        ...(genero && { genero }),
-        ...(numeroTelefonico && { numeroTelefonico }),
-        ...(imagenUrl && { imagenUrl }) // Solo si se subió imagen
-      },
-      { new: true }
+      { correo: req.user.correo }, // Busca el perfil por el correo del usuario autenticado
+      updateFields, // Usa el objeto con los campos a actualizar
+      { new: true, runValidators: true } // `new: true` para devolver el documento actualizado, `runValidators: true` para ejecutar las validaciones del schema de Mongoose
     );
 
     if (!updatedProfile) {
@@ -323,14 +329,14 @@ app.put('/api/user/profile/:userId', verifyToken, upload.single('imagen'), [
       updatedAt: updatedProfile.updatedAt
     };
 
+    console.log('Perfil actualizado con éxito para usuario:', req.user.correo);
     res.status(200).json(profileData);
 
   } catch (error) {
-    console.error('Error actualizando perfil:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('Error detallado al actualizar perfil:', error); // Mensaje de error más detallado en la consola del servidor
+    res.status(500).json({ message: 'Error interno del servidor', details: error.message }); // Envía el mensaje de error al frontend para depuración (considera eliminar en producción)
   }
 });
-
 
 
 // ==================== RUTA PARA SUBIR IMAGEN A CLOUDINARY ====================
