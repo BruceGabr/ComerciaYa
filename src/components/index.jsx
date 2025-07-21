@@ -5,3 +5,4 @@ export { default as EmprendimientoCard } from './emprendimientoCard/Emprendimien
 export { default as Sidebar } from './sidebar/Sidebar';
 export { default as ScrollToTop } from './scrollToTop/ScrollToTop';
 export { default as Modal } from './UI/Modal/Modal'
+export { default as ExplorarCard } from './explorarCard/ExplorarCard';

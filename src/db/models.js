@@ -51,7 +51,7 @@ const emprendimientoSchema = new mongoose.Schema({
     enum: CATEGORIAS_EMPRENDIMIENTOS
   },
   // Referencia al Usuario que creó el emprendimiento
-  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Registro', required: true },
   // Campos para popularidad y valoraciones
   totalValoraciones: { type: Number, default: 0 },
   promedioValoraciones: { type: Number, default: 0, min: 0, max: 5 },

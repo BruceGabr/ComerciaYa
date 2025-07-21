@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePageReady } from '../../context/PageReadyContext';
+import { ExplorarCard } from '../../components';
 import './Explorar.css';
 
 const Explorar = () => {
@@ -122,12 +123,6 @@ const Explorar = () => {
     fetchEmprendimientos();
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Fecha no disponible';
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? 'Fecha no disponible' : date.toLocaleDateString('es-ES');
-  };
-
   const getCategoryIcon = (category) => {
     const icons = {
       'Ropa y Accesorios': '👕',
@@ -161,10 +156,6 @@ const Explorar = () => {
       </div>
     );
   }
-
-  // Extraer el primer emprendimiento si existe y hay filtros aplicados
-  const firstEmprendimiento = filteredEmprendimientos.length > 0 ? filteredEmprendimientos[0] : null;
-  const remainingEmprendimientos = filteredEmprendimientos.slice(1);
 
   return (
     <div className="explorar-container">
@@ -270,55 +261,8 @@ const Explorar = () => {
           </div>
         )}
 
-        {/* Primer Emprendimiento Destacado (si existe) */}
-        {firstEmprendimiento && (
-          <div key={firstEmprendimiento._id} className="emprendimiento-card-explorar featured-card">
-            <div className="card-header-explorar">
-              <div className="card-category-explorar">
-                <span className="category-badge-explorar">
-                  {getCategoryIcon(firstEmprendimiento.categoriaEmprendimiento)}
-                  {firstEmprendimiento.categoriaEmprendimiento}
-                </span>
-              </div>
-            </div>
-
-            <div className="card-content-explorar">
-              <h3 className="card-title-explorar">{firstEmprendimiento.nombreEmprendimiento}</h3>
-              <p className="card-description-explorar">{firstEmprendimiento.descripcion}</p>
-
-              <div className="card-stats-explorar">
-                <div className="stat-item-explorar">
-                  <span className="stat-icon-explorar">📅</span>
-                  <span className="stat-text-explorar">
-                    {formatDate(firstEmprendimiento.createdAt)}
-                  </span>
-                </div>
-                <div className="stat-item-explorar">
-                  <span className="stat-icon-explorar">⭐</span>
-                  <span className="stat-text-explorar">
-                    {firstEmprendimiento.promedioValoraciones > 0
-                      ? `${firstEmprendimiento.promedioValoraciones.toFixed(1)} estrellas`
-                      : 'Sin valoraciones'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="card-footer-explorar">
-              <div className="card-actions-explorar">
-                <button className="btn-contact">
-                  📞 Contactar
-                </button>
-                <button className="btn-view">
-                  👁️ Ver más
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Grid de los emprendimientos restantes (si existen) o Empty State */}
-        {filteredEmprendimientos.length === 0 ? ( // Mostrar empty state si no hay NINGÚN emprendimiento
+        {/* Grid de emprendimientos usando ExplorarCard */}
+        {filteredEmprendimientos.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🔍</div>
             <h3>
@@ -326,11 +270,6 @@ const Explorar = () => {
                 ? 'No se encontraron emprendimientos'
                 : 'No hay emprendimientos disponibles'}
             </h3>
-            <p>
-              {searchTerm || selectedCategory
-                ? 'Intenta con otros términos de búsqueda o filtros'
-                : 'Aún no hay emprendimientos registrados'}
-            </p>
             {(searchTerm || selectedCategory) && (
               <button className="clear-filters-btn" onClick={clearFilters}>
                 Limpiar filtros
@@ -338,61 +277,20 @@ const Explorar = () => {
             )}
           </div>
         ) : (
-          remainingEmprendimientos.length > 0 && ( // Solo mostrar el grid si hay emprendimientos restantes
-            <div className="emprendimientos-grid">
-              {remainingEmprendimientos.map(emprendimiento => (
-                <div key={emprendimiento._id} className="emprendimiento-card-explorar">
-                  <div className="card-header-explorar">
-                    <div className="card-category-explorar">
-                      <span className="category-badge-explorar">
-                        {getCategoryIcon(emprendimiento.categoriaEmprendimiento)}
-                        {emprendimiento.categoriaEmprendimiento}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="card-content-explorar">
-                    <h3 className="card-title-explorar">{emprendimiento.nombreEmprendimiento}</h3>
-                    <p className="card-description-explorar">{emprendimiento.descripcion}</p>
-
-                    <div className="card-stats-explorar">
-                      <div className="stat-item-explorar">
-                        <span className="stat-icon-explorar">📅</span>
-                        <span className="stat-text-explorar">
-                          {formatDate(emprendimiento.createdAt)}
-                        </span>
-                      </div>
-                      <div className="stat-item-explorar">
-                        <span className="stat-icon-explorar">⭐</span>
-                        <span className="stat-text-explorar">
-                          {emprendimiento.promedioValoraciones > 0
-                            ? `${emprendimiento.promedioValoraciones.toFixed(1)} estrellas`
-                            : 'Sin valoraciones'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card-footer-explorar">
-                    <div className="card-actions-explorar">
-                      <button className="btn-contact">
-                        📞 Contactar
-                      </button>
-                      <button className="btn-view">
-                        👁️ Ver más
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
+          <div className="emprendimientos-grid">
+            {filteredEmprendimientos.map(emprendimiento => (
+              <ExplorarCard 
+                key={emprendimiento._id} 
+                emprendimiento={emprendimiento} 
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Estadísticas al final de la página - EN EL PANEL */}
+      {/* Estadísticas al final de la página */}
       {filteredEmprendimientos.length > 0 && (
-        <div className="explorar-stats-panel"> {/* Nuevo wrapper para el panel */}
+        <div className="explorar-stats-panel">
           <div className="stats-bar-bottom">
             <div className="stats-item">
               <span className="stats-number">{filteredEmprendimientos.length}</span>

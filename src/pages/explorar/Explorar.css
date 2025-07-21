@@ -630,7 +630,6 @@
   border: 2px dashed rgba(0, 0, 0, 0.1);
   box-shadow: var(--shadow-medium);
   width: 100%; /* Ocupar el 100% para que se centre con el padre flex */
-  max-width: 700px; /* Un poco más grande si se quiere */
 }
 
 .empty-icon {
