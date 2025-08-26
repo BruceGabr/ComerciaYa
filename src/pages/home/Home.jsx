@@ -1,37 +1,32 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./Home.css"; // Crearemos este archivo para estilos
-import EmprendimientoCard from "../../components/emprendimientoCard/EmprendimientoCard";
+import ExplorarCard from "../../components/explorarCard/ExplorarCard";
 
-import artesaniasImg from "../../assets/images/artesanias.webp";
-import comidaCaseraImg from "../../assets/images/comida-casera.jpg";
-import productosNaturalesImg from "../../assets/images/productos-naturales.webp";
 import bannerImg from "../../assets/images/contabilidad.png";
 
 const Home = () => {
-  const destacados = [
-    {
-      id: 1,
-      nombre: "Artesanías Peruanas",
-      imagen: artesaniasImg,
-      descripcion:
-        "Artesanías únicas elaboradas a mano con materiales locales. Perfectas para regalos o decoración.",
-    },
-    {
-      id: 2,
-      nombre: "Comida Casera de Mamá",
-      imagen: comidaCaseraImg,
-      descripcion:
-        "Disfruta de los sabores tradicionales de la comida casera peruana, con ingredientes frescos y naturales.",
-    },
-    {
-      id: 3,
-      nombre: "Productos Naturales",
-      imagen: productosNaturalesImg,
-      descripcion:
-        "Productos 100% naturales para el cuidado de tu piel, elaborados con hierbas y aceites orgánicos.",
-    },
-  ];
+  const [emprendimientosDestacados, setEmprendimientosDestacados] = useState([]);
+  const [loadingDestacados, setLoadingDestacados] = useState(true);
+
+  // Función para obtener los 3 emprendimientos más recientes
+  const fetchEmprendimientosDestacados = async () => {
+    try {
+      setLoadingDestacados(true);
+      const response = await fetch('http://localhost:5000/api/emprendimientos?limit=3&sort=createdAt&order=desc');
+      const data = await response.json();
+      setEmprendimientosDestacados(data);
+    } catch (error) {
+      console.error('Error al cargar emprendimientos destacados:', error);
+      setEmprendimientosDestacados([]);
+    } finally {
+      setLoadingDestacados(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmprendimientosDestacados();
+  }, []);
 
   return (
     <div className="home">
@@ -65,17 +60,41 @@ const Home = () => {
       {/* Sección de emprendimientos destacados */}
       <section className="home__featured-products">
         <div className="container">
-          <h3 className="home__section-title">Emprendimientos Destacados</h3>
-          <div className="home__cards-grid">
-            {destacados.map((item) => (
-              <EmprendimientoCard
-                key={item.id}
-                nombre={item.nombre}
-                imagen={item.imagen}
-                descripcion={item.descripcion}
-              />
-            ))}
-          </div>
+          <h3 className="home__section-title">Emprendimientos Más Recientes</h3>
+          
+          {loadingDestacados ? (
+            <div className="home__loading">
+              <div className="home__spinner"></div>
+              <p>Cargando emprendimientos...</p>
+            </div>
+          ) : emprendimientosDestacados.length === 0 ? (
+            <div className="home__empty-state">
+              <div className="home__empty-icon">🏪</div>
+              <h4>No hay emprendimientos disponibles</h4>
+              <p>Sé el primero en registrar tu emprendimiento</p>
+              <Link to="/registro" className="home__cta">
+                Registrar Emprendimiento
+              </Link>
+            </div>
+          ) : (
+            <div className="home__cards-grid">
+              {emprendimientosDestacados.map((emprendimiento) => (
+                <ExplorarCard
+                  key={emprendimiento._id}
+                  emprendimiento={emprendimiento}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Enlace para ver todos los emprendimientos */}
+          {emprendimientosDestacados.length > 0 && (
+            <div className="home__view-all">
+              <Link to="/explorar" className="home__view-all-btn">
+                Ver todos los emprendimientos →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -143,8 +162,8 @@ const Home = () => {
             manera gratuita.
           </p>
           <Link to="/registro" className="home__cta home__cta-join">
-          Quiero Unirme
-            </Link>
+            Quiero Unirme
+          </Link>
         </div>
       </section>
     </div>

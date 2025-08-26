@@ -1,19 +1,23 @@
-// src/components/PrivateRoute.jsx
-// import { Navigate } from "react-router-dom"; // Ya no necesitamos Navigate para esto
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth(); // Esto siempre será true ahora
+  const { isAuthenticated, loading } = useAuth();
 
-  // En modo de prueba, PrivateRoute siempre permite el acceso
-  if (!isAuthenticated) {
-    // Esta condición NUNCA se cumplirá con el AuthContext modificado,
-    // pero se mantiene por si en el futuro se revierte el AuthContext.
-    // return <Navigate to="/login" replace />;
-    console.warn("PrivateRoute detectó !isAuthenticated pero está en modo de prueba. ¡Ignorando redirección!");
+  // Si está definitivamente NO autenticado, redirigir a login
+  if (isAuthenticated === false) {
+    return <Navigate to="/login" replace />;
   }
 
-  return children; // Siempre permite el acceso a las rutas protegidas
+  // Si aún está verificando autenticación (loading o null), no renderizar nada
+  // El spinner principal se encargará de mostrar el estado de carga
+  if (loading || isAuthenticated === null) {
+    return null;
+  }
+
+  // Si está autenticado, renderizar el contenido
+  console.log("PrivateRoute: Usuario autenticado, renderizando contenido");
+  return children;
 };
 
 export default PrivateRoute;

@@ -1,103 +1,312 @@
-import React, { useEffect, useState } from "react";
-import "./Explorar.css";
-import EmprendimientoCard from "../../components/emprendimientoCard/EmprendimientoCard";
-
-import artesaniasImg from "../../assets/images/artesanias.webp";
-import comidaCaseraImg from "../../assets/images/comida-casera.jpg";
-import productosNaturalesImg from "../../assets/images/productos-naturales.webp";
-
-const STORAGE_KEY = "miEmprendimientoData";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { usePageReady } from '../../context/PageReadyContext';
+import { ExplorarCard } from '../../components';
+import './Explorar.css';
 
 const Explorar = () => {
-  // Estado para emprendimiento dinámico guardado
-  const [emprendimientoUsuario, setEmprendimientoUsuario] = useState(null);
+  const { token } = useAuth();
+  const { pageReady, isLoading, finishLoading } = usePageReady();
+  const [emprendimientos, setEmprendimientos] = useState([]);
+  const [filteredEmprendimientos, setFilteredEmprendimientos] = useState([]);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Lista estática actual
-  const emprendimientos = [
-    {
-      id: 1,
-      nombre: "Artesanías Peruanas",
-      imagen: artesaniasImg,
-      descripcion:
-        "Artesanías únicas elaboradas a mano con materiales locales. Perfectas para regalos o decoración.",
-    },
-    {
-      id: 2,
-      nombre: "Comida Casera de Mamá",
-      imagen: comidaCaseraImg,
-      descripcion:
-        "Disfruta de los sabores tradicionales de la comida casera peruana, con ingredientes frescos y naturales.",
-    },
-    {
-      id: 3,
-      nombre: "Productos Naturales",
-      imagen: productosNaturalesImg,
-      descripcion:
-        "Productos 100% naturales para el cuidado de tu piel, elaborados con hierbas y aceites orgánicos.",
-    },
+  const componentMounted = useRef(true);
+  const abortControllerRef = useRef(null);
+
+  const categorias = [
+    'Ropa y Accesorios', 'Hogar y Decoración', 'Tecnología',
+    'Comidas y Bebidas', 'Artesanías', 'Servicios Profesionales',
+    'Educación y Capacitación', 'Salud y Bienestar', 'Belleza y Cuidado Personal',
+    'Entretenimiento y Eventos', 'Agricultura', 'Mascotas y Veterinaria',
+    'Turismo', 'Transporte y Logística', 'Deportes y Recreación',
+    'Construcción', 'Otro'
   ];
 
-  useEffect(() => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-      const parsedData = JSON.parse(data);
+  const fetchEmprendimientos = useCallback(async () => {
+    try {
+      setError('');
 
-      // Convertir el objeto a formato compatible con EmprendimientoCard
-      // Por ejemplo: nombre, descripción, imagen (que no tenemos como URL, así que ponemos null o imagen placeholder)
-      setEmprendimientoUsuario({
-        id: "usuario",
-        nombre: "Mi Emprendimiento",
-        descripcion: parsedData.descripcion,
-        imagen: null, // Puedes poner una imagen placeholder si quieres
-        productos: parsedData.productos, // por si queremos usarlo después
+      // Crear nuevo AbortController para esta petición
+      abortControllerRef.current = new AbortController();
+
+      const response = await fetch('http://localhost:5000/api/emprendimientos', {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        signal: abortControllerRef.current.signal
       });
+
+      if (!componentMounted.current) return;
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!componentMounted.current) return;
+
+      console.log('✅ Explorar: Emprendimientos obtenidos:', data.length);
+      setEmprendimientos(Array.isArray(data) ? data : []);
+      setFilteredEmprendimientos(Array.isArray(data) ? data : []);
+      finishLoading();
+
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('⏹️ Explorar: Fetch cancelado');
+        return;
+      }
+
+      if (!componentMounted.current) return;
+
+      console.error('❌ Explorar: Error fetching emprendimientos:', err);
+      setError(err.message || 'Error al cargar emprendimientos');
+      finishLoading();
     }
+  }, [token, finishLoading]);
+
+  // Efecto de limpieza
+  useEffect(() => {
+    componentMounted.current = true;
+
+    return () => {
+      componentMounted.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
+  // Cargar emprendimientos al montar el componente
+  useEffect(() => {
+    fetchEmprendimientos();
+  }, [fetchEmprendimientos]);
+
+  // Filtrar emprendimientos
+  useEffect(() => {
+    let filtered = emprendimientos;
+
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(emp =>
+        emp.nombreEmprendimiento.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedCategory) {
+      filtered = filtered.filter(emp => emp.categoriaEmprendimiento === selectedCategory);
+    }
+
+    setFilteredEmprendimientos(filtered);
+  }, [emprendimientos, searchTerm, selectedCategory]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('');
+    setShowFilters(false);
+  };
+
+  const handleRetry = () => {
+    fetchEmprendimientos();
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'Ropa y Accesorios': '👕',
+      'Hogar y Decoración': '🏠',
+      'Tecnología': '💻',
+      'Comidas y Bebidas': '🍕',
+      'Artesanías': '🎨',
+      'Servicios Profesionales': '💼',
+      'Educación y Capacitación': '📚',
+      'Salud y Bienestar': '🏥',
+      'Belleza y Cuidado Personal': '💄',
+      'Entretenimiento y Eventos': '🎭',
+      'Agricultura': '🌾',
+      'Mascotas y Veterinaria': '🐾',
+      'Turismo': '✈️',
+      'Transporte y Logística': '🚛',
+      'Deportes y Recreación': '⚽',
+      'Construcción': '🏗️',
+      'Otro': '📦'
+    };
+    return icons[category] || '📦';
+  };
+
+  if (isLoading || !pageReady) {
+    return (
+      <div className="explorar-container">
+        <div className="explorar-loading">
+          <div className="loading-spinner"></div>
+          <p>Cargando emprendimientos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="explorar">
-      {/* Sección principal */}
-      <section className="explorar__header">
-        <div className="container">
-          <h2 className="explorar__title">
-            Lo Mejor de Nuestros Emprendedores
-          </h2>
-          <p className="explorar__description">
-            Descubre nuevos productos y servicios ofrecidos por emprendedores
-            locales.
+    <div className="explorar-container">
+      {/* Header */}
+      <div className="explorar-header">
+        <div className="header-content">
+          <h1 className="explorar-title">Explorar Emprendimientos</h1>
+          <p className="explorar-subtitle">
+            Descubre increíbles emprendimientos locales y conecta con sus productos y servicios
           </p>
         </div>
-      </section>
+      </div>
 
-      {/* Productos */}
-      <section className="explorar__products">
-        <div className="container">
-          <h3 className="explorar__section-title">
-            Emprendimientos Disponibles
-          </h3>
-          <div className="explorar__grid">
-            {/* Mostrar emprendimiento del usuario si existe */}
-            {emprendimientoUsuario && (
-              <EmprendimientoCard
-                key={emprendimientoUsuario.id}
-                nombre={emprendimientoUsuario.nombre}
-                imagen={emprendimientoUsuario.imagen}
-                descripcion={emprendimientoUsuario.descripcion}
+      {/* Filtros y búsqueda */}
+      <div className="explorar-filters">
+        <div className="filters-container">
+          <div className="search-section">
+            <div className="search-input-container">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                placeholder="Buscar emprendimientos..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="search-input"
               />
-            )}
+              {searchTerm && (
+                <button
+                  className="clear-search-btn"
+                  onClick={() => setSearchTerm('')}
+                  title="Limpiar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
 
-            {/* Mostrar los emprendimientos estáticos */}
-            {emprendimientos.map((emprendimiento) => (
-              <EmprendimientoCard
-                key={emprendimiento.id}
-                nombre={emprendimiento.nombre}
-                imagen={emprendimiento.imagen}
-                descripcion={emprendimiento.descripcion}
+            <button
+              className={`filters-toggle ${showFilters ? 'active' : ''}`}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              🎛️ Filtros
+            </button>
+          </div>
+
+          {showFilters && (
+            <div className="filters-dropdown">
+              <div className="filter-group">
+                <label htmlFor="category-filter">Categoría:</label>
+                <select
+                  id="category-filter"
+                  value={selectedCategory}
+                  onChange={handleCategoryChange}
+                  className="category-select"
+                >
+                  <option value="">Todas las categorías</option>
+                  {categorias.map(categoria => (
+                    <option key={categoria} value={categoria}>
+                      {getCategoryIcon(categoria)} {categoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-actions">
+                <button className="clear-filters-btn" onClick={clearFilters}>
+                  Limpiar filtros
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Filtros activos */}
+        {(searchTerm || selectedCategory) && (
+          <div className="active-filters">
+            <span className="active-filters-label">Filtros activos:</span>
+            {searchTerm && (
+              <span className="filter-tag">
+                Búsqueda: "{searchTerm}"
+                <button onClick={() => setSearchTerm('')}>✕</button>
+              </span>
+            )}
+            {selectedCategory && (
+              <span className="filter-tag">
+                {getCategoryIcon(selectedCategory)} {selectedCategory}
+                <button onClick={() => setSelectedCategory('')}>✕</button>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Contenido principal */}
+      <div className="explorar-content">
+        {error && (
+          <div className="error-message">
+            <span className="error-icon">⚠️</span>
+            <span>{error}</span>
+            <button className="retry-btn" onClick={handleRetry}>
+              Reintentar
+            </button>
+          </div>
+        )}
+
+        {/* Grid de emprendimientos usando ExplorarCard */}
+        {filteredEmprendimientos.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🔍</div>
+            <h3>
+              {searchTerm || selectedCategory
+                ? 'No se encontraron emprendimientos'
+                : 'No hay emprendimientos disponibles'}
+            </h3>
+            {(searchTerm || selectedCategory) && (
+              <button className="clear-filters-btn" onClick={clearFilters}>
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="emprendimientos-grid">
+            {filteredEmprendimientos.map(emprendimiento => (
+              <ExplorarCard 
+                key={emprendimiento._id} 
+                emprendimiento={emprendimiento} 
               />
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Estadísticas al final de la página */}
+      {filteredEmprendimientos.length > 0 && (
+        <div className="explorar-stats-panel">
+          <div className="stats-bar-bottom">
+            <div className="stats-item">
+              <span className="stats-number">{filteredEmprendimientos.length}</span>
+              <span className="stats-label">
+                {filteredEmprendimientos.length === 1 ? 'Emprendimiento encontrado' : 'Emprendimientos encontrados'}
+              </span>
+            </div>
+            {(searchTerm || selectedCategory) && (
+              <div className="stats-item">
+                <span className="stats-number">{emprendimientos.length}</span>
+                <span className="stats-label">Total disponibles</span>
+              </div>
+            )}
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 };
